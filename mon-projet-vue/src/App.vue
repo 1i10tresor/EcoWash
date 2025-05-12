@@ -9,8 +9,14 @@
     </div>
 
     <footer>
-      <p>Copyright © 2025 Spring Coating Systems. All rights reserved.</p>
-      <a href="https://spring-coating.com" target="_blank">https://spring-coating.com</a>
+
+      <div id="mainFooter">
+        <a href="https://spring-coating.com" target="_blank">https://spring-coating.com</a>
+      </div>
+
+      <div id="lowFooter">
+        <p>Copyright © 2025 Spring Coating Systems. Tous droits réservés.</p>
+      </div> 
     </footer>
   </div>
 </template>
@@ -64,6 +70,8 @@ footer {
   background-color: #333;
   padding: 20px 10px;
   font-size: 14px;
+  display: flex;
+  flex-direction: column;
 }
 
 footer a {

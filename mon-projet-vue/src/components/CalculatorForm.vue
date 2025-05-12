@@ -1,17 +1,15 @@
 <template>
   <div id="calculator">
     <h1>EcoWash Balancing</h1>
-
     <div id="main">
       <form id="parametres" @submit.prevent="calculate">
         <div id="EW_version">
           <label for="version">Choix du modèle</label><br>
           <select name="version" id="modele" v-model="donnees.modele">
             <option value="" disabled>-- Sélectionnez une version --</option>
-            <option value="EcoWash">EcoWash</option>
-            <option value="EcoWash 3D">EcoWash 3D</option>
-            <option value="EcoWash-4">EcoWash-4</option>
-            <option value="EcoWash T-sol">EcoWash T-sol</option>
+            <option v-for="(recette, index) in liste_recettes_corrigee" :key="index" :value="recette">
+              {{ recette }}
+            </option>
           </select>
         </div>
 
@@ -46,16 +44,20 @@
         </div>
 
         <button type="submit">Calculer</button>
-        <div id="resultat" v-if="resultat">
-          <p>Résultat : {{ resultat }}</p>
+        
+        <div id="resultat" v-if="resultat_corrige && Object.keys(resultat_corrige).length">
+          <p v-if="resultat_corrige">Résultat</p>
+            <li v-for="(value, key) in resultat_corrige" :key="key">
+              Ajouter {{ value.toFixed(7) }} d'{{ key }}
+            </li>
         </div>
-      </form>
+      </form>  
     </div>
   </div>
 </template>
 
 <script>
-import { reactive, ref } from 'vue';
+import { computed, reactive, ref } from 'vue';
 import axios from 'axios';
 
 export default {
@@ -68,36 +70,63 @@ export default {
       densite: 0,
       refraction: 0,
     });
+
     const resultat = ref(null);
     const erreur = ref(null);
+    const liste_recettes = ref([]);
+    
+    const liste_recettes_corrigee = computed(() =>
+      liste_recettes.value.map(nom =>
+        nom.replace(/\.[^.]+$/, '')
+      )
+    );
+    
+    const resultat_corrige = computed(() => {
+      if (!resultat.value?.result?.additives) return {};
+      const adds = resultat.value.result.additives;
+      return Object.fromEntries(
+        Object.entries(adds).filter(([, qty]) => qty !== 0));
+    });
+
+    const recup_liste_recettes = async () => {
+      try {
+        const response = await axios.get('http://127.0.0.1:5000/recette');
+        liste_recettes.value = response.data;
+      } catch (err) {
+        console.error('Erreur lors de la requête :', err);
+        erreur.value = 'Erreur de communication avec le serveur';
+      }
+    };
 
     const calculate = async () => {
-      console.log('Données soumises :', donnees);
-
       try {
         const response = await axios.post('http://127.0.0.1:5000/calculate', {
           densite: donnees.densite,
           refraction: donnees.refraction,
+          fichier_excel: donnees.modele
         });
         resultat.value = response.data;
-        console.log('Réponse du backend :', response.data);
       } catch (err) {
         console.error('Erreur lors de la requête :', err);
-        erreur.value = 'Une erreur est survenue lors de la communication avec le serveur.';
+        erreur.value = 'Erreur lors du calcul';
       }
     };
+
+    recup_liste_recettes();
 
     return {
       donnees,
       resultat,
       erreur,
+      liste_recettes,
       calculate,
+      recup_liste_recettes,
+      liste_recettes_corrigee,
+      resultat_corrige,
     };
   },
 };
 </script>
-
-
 
 <style scoped>
 /* Conteneur principal */

@@ -3,13 +3,17 @@ from flask_cors import CORS
 import numpy as np
 import pandas as pd
 import json
+import os
 
 app = Flask(__name__)
 CORS(app)
 
 # === Données du solvant initial ===
 def solvantInitial(fichier_excel):
-    df = pd.read_excel(fichier_excel)
+
+    base_dir = os.path.dirname(__file__)  # Répertoire du script actuel
+    recette = os.path.join(base_dir, 'recette',fichier_excel)  # Chemin vers le dossier "recette"
+    df = pd.read_excel(recette)
     solvant_initial = {}
     for _, row in df.iterrows():
         solvant_initial[row['Composant']] = {
@@ -19,7 +23,6 @@ def solvantInitial(fichier_excel):
         }
     return solvant_initial
 
-solvant_initial = solvantInitial('recette\\solvant_initial.xlsx')
 
 
 @app.route('/calculate', methods=['POST'])
@@ -32,11 +35,13 @@ def calculate():
     """
     try:
         data = request.get_json()
-        densite = data.get('densite')
-        indice_refraction = data.get('refraction')
+        densite = float(data['densite'])
+        indice_refraction = float(data['refraction'])
+        fichier_excel = str(data['fichier_excel']+'.xlsx') # Nom du fichier Excel par défaut
         
         # Lancement du processus de calcul
-        result = etape_1(indice_refraction, densite, solvant_initial)
+        result = etape_1(indice_refraction, densite, solvantInitial(fichier_excel))
+        print("Youpi, le résultat est prêt !")
         return jsonify({"success": True, "result": result})
         
     except ValueError as e:
@@ -59,23 +64,26 @@ def etape_1(n, d, sI):
     Returns:
         dict: Résultats des calculs avec les concentrations et les additifs nécessaires
     """
+    print("Etape 1 done")
     try:
         # Correction pour l'éthanol
         fraction_etoh = sI["ETOH"]["concG"]
         ir_corrige = n - (fraction_etoh * sI["ETOH"]["IR"])
-        densite_corrigee = d - (fraction_etoh * sI["ETOH"]["Density"])
+        densite_corrigee = d - (fraction_etoh * sI["ETOH"]["density"])
         somme_fractions = 1.0 - fraction_etoh
 
         # Matrice du système d'équations
         A = np.array([
             [sI["ISOL"]["IR"], sI["BZOH"]["IR"], sI["DIPB"]["IR"]],
-            [sI["ISOL"]["Density"], sI["BZOH"]["Density"], sI["DIPB"]["Density"]],
+            [sI["ISOL"]["density"], sI["BZOH"]["density"], sI["DIPB"]["density"]],
             [1.0, 1.0, 1.0]
         ])
 
         b = np.array([ir_corrige, densite_corrigee, somme_fractions])
         solution = np.linalg.solve(A, b)
         isol, bzoh, dipb = solution
+
+        print("système d'équations résolu")
 
         # Passage à l'étape 2 pour déterminer les excès
         return etape_2(isol, bzoh, dipb, sI)
@@ -98,6 +106,7 @@ def etape_2(x, y, z, sI):
     Returns:
         dict: Résultats avec les concentrations et les quantités d'additifs nécessaires
     """
+    print("Etape 2 done")
     try:
         # Calcul des ratios initiaux
         a = sI["ISOL"]["concG"] / sI["BZOH"]["concG"]
@@ -139,6 +148,7 @@ def etape_3(x, y, z, sI, ex, ABC, ABC_):
     Returns:
         dict: Dictionnaire contenant les fractions et les quantités d'additifs
     """
+    print("Etape 3 done")
     try:
         additives = {"EcoAdd1": 0, "EcoAdd2": 0, "EcoAdd3": 0}
         
@@ -147,37 +157,54 @@ def etape_3(x, y, z, sI, ex, ABC, ABC_):
             dipb_cible = ABC[2] * x
             delta_bzoh = bzoh_cible - y
             delta_dipb = dipb_cible - z
-            additives["EcoAdd2"] = delta_bzoh / 0.81  # 0.81 = concentration de BZOH pur
-            additives["EcoAdd3"] = delta_dipb / 0.83   # 0.83 = concentration de DIPB pur
+            additives["EcoAdd 2"] = delta_bzoh / 0.81  # 0.81 = concentration de BZOH pur
+            additives["EcoAdd 3"] = delta_dipb / 0.83   # 0.83 = concentration de DIPB pur
             
         elif ex == "2":  # BZOH en excès
             isol_cible = ABC_[0] * y
             dipb_cible = ABC[1] * y
             delta_isol = isol_cible - x
             delta_dipb = dipb_cible - z
-            additives["EcoAdd1"] = delta_isol / 0.852  # 0.852 = concentration de ISOL pur
-            additives["EcoAdd3"] = delta_dipb / 0.83
+            additives["EcoAdd 1"] = delta_isol / 0.852  # 0.852 = concentration de ISOL pur
+            additives["EcoAdd 3"] = delta_dipb / 0.83
             
         elif ex == "3":  # DIPB en excès
             isol_cible = z / ABC[2]
             bzoh_cible = z / ABC[1]
             delta_isol = isol_cible - x
             delta_bzoh = bzoh_cible - y
-            additives["EcoAdd1"] = delta_isol / 0.852
-            additives["EcoAdd2"] = delta_bzoh / 0.81
+            additives["EcoAdd 1"] = delta_isol / 0.852
+            additives["EcoAdd 2"] = delta_bzoh / 0.81
 
         return {
-            "fractions": {
-                "ISOL": float(x),
-                "BZOH": float(y),
-                "DIPB": float(z),
-                "ETOH": float(sI["ETOH"]["concG"])
-            },
             "additives": additives
         }
 
     except Exception as e:
         raise Exception(f"Erreur lors de l'étape 3: {str(e)}")
+    
+@app.route('/recette', methods=['GET'])
+def liste_fichiers_recette():
+    base_dir = os.path.dirname(__file__)  # Répertoire du script actuel
+    dossier_recette = os.path.join(base_dir, 'recette')  # Chemin vers le dossier "recette"
+    
+    # Vérifier si le dossier existe
+    if not os.path.exists(dossier_recette):
+        print(f"Le dossier {dossier_recette} n'existe pas.")
+        return []
+    
+    # Lister les fichiers
+    fichiers = os.listdir(dossier_recette)
+    return fichiers
+
+
+
+
+
+
+
 
 if __name__ == '__main__':
     app.run(port=5000, debug=True)
+
+

@@ -1,19 +1,20 @@
 <template>
-    <div>
-      <p>Formulaire EcoAdd chargé 🎉</p>
-      <button @click="onClick">Cliquez-moi</button>
-    </div>
+  <header>
+    <h1>Calculateur de correction de densité</h1>
+  </header>
+  <div id="corps">
+  </div>
+  <footer>
+    <p>Copyright © 2025 Spring Coating Systems. All rights reserved.</p>
+    <a href="https://spring-coating.com" target="_blank">https://spring-coating.com</a>
+  </footer>
 </template>
-  
+
+
 <script>
-export default {
-name: 'CalculatorForm',
-setup() {
-    function onClick() { alert('OK') }
-    return { onClick }
-}
-}
 </script>
+
+
 
 <style scoped>
 </style>

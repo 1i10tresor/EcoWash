@@ -10,13 +10,35 @@
 
     <footer>
 
-      <div id="mainFooter">
-        <a href="https://spring-coating.com" target="_blank">https://spring-coating.com</a>
-      </div>
+        <div id="topFooter">
 
-      <div id="lowFooter">
-        <p>Copyright © 2025 Spring Coating Systems. Tous droits réservés.</p>
-      </div> 
+            <div id="logo">
+                <img src="../src/assets/logo.png" alt="Logo" />
+            </div>
+
+            <div id="adresse">
+                <h2>Spring Coating Systems</h2>
+                <p>18 rue de la Fabrique</p>
+                <p>68530 BUHL</p>
+                <p>Tél : 03 89 83 06 82</p>
+            </div>
+            <div id="contact">
+                <h2>Contact</h2>
+                <a href="mailto:contact@spring-coating.com">contact@spring-coating.com</a>
+                
+                <p>Tél : 03 89 83 06 82</p>
+            </div>
+
+            <div id="description">
+                <a href="https://www.linkedin.com/company/spring-coating-systems/" target="_blank" id="lienIn"><img id="linkedin" src="../src/assets/linkedin.png" alt="Logo"></a>
+                <p>Spring Coating Systems est formulateur et fabricant d’encres, vernis, colles, et peintures pour des applications industrielles et l’impression d'emballages. Nos produits sont souvent formulés sur mesure et adaptés à l’activité de nos clients. Les principaux produits de Spring Coating pour l'impression d'emballage sont : l’encre UV, l’encre pour contact alimentaire direct, les encres à l'eau et des encres de spécialité comme des encres « grattables », etc.</p>
+            </div> 
+
+        </div>
+
+        <div id="botFooter">
+            <h3>Copyright 2025 Spring Coating Systems. All rights reserved</h3>
+        </div>
     </footer>
   </div>
 </template>
@@ -63,24 +85,82 @@ header h1 {
   align-items: center;
 }
 
-/* Footer */
-footer {
-  text-align: center;
-  color: white;
-  background-color: #333;
-  padding: 20px 10px;
-  font-size: 14px;
-  display: flex;
-  flex-direction: column;
-}
+footer{
+        height: 120px;
+        color: rgb(231, 228, 222);
+    }
+    #topFooter{
+        height: 80%;
+        border: 1px solid black;
+        background-color: rgb(48, 42, 42);
+        display: flex;
+    }
+    #botFooter{
+        height: 20%;
+        border: 1px solid black;
+        background-color: rgb(48, 42, 42);
+        border-top: 0.5px solid rgb(241, 243, 220);
+        font-size: x-small;
+    }
 
-footer a {
-  color: #4CAF50;
-  text-decoration: none;
-  font-weight: bold;
-}
+    #logo{
+        width: 20%;
+        padding: 20px;
+        display: flex;
+        justify-content: center;
+        transition: all 0.3s ease-in-out;
+    }
+    #adresse{
+        width: 20%;
+        display: flex;
+        justify-content: center;
+        flex-direction: column;
+        align-items: center;
+        transition: all 0.3s ease-in-out;
+    }
+    #contact{
+        width: 20%;
+        display: flex;
+        justify-content: center;
+        align-items :center;  
+        flex-direction: column;
+        transition: all 0.3s ease-in-out;
+    }
+    #description{
+        width: 40%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        text-justify: justify;
+        align-items: center;
+        font-size: xx-small;
+    }
+    a{
+        text-decoration: none;
+        color: rgb(241, 243, 220);
 
-footer a:hover {
-  text-decoration: underline;
-}
+    }
+    #linkedin{
+        width: 100px;
+        background-color: transparent !important;
+    }
+    /* #linkedin:hover{
+        border-radius: 10px;
+        border: 1px solid rgb(241, 243, 220);
+    } */
+
+    #lienIn{
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 50px;
+        border-bottom: 1px solid rgb(241, 243, 220);
+        margin-bottom: 10px;
+        transition: all 0.3s ease-in-out;
+    }
+
+    #lienIn:hover, #contact:hover, #adresse:hover, #logo:hover{
+        border-radius: 10px;
+        transform: scale(1.05);
+    }
 </style>

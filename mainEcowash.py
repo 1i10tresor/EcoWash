@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 import json
 import os
+import yagmail
+from datetime import datetime
 
 app = Flask(__name__)
 CORS(app)
@@ -25,7 +27,39 @@ def solvantInitial(fichier_excel):
         }
     return solvant_initial
 
+@app.route('/send_mail', methods=['POST'])
+def send_mail():
+    try:
+        data = request.get_json()
+        recipient_email = data['email']
+        form_data = data['donnees']
+        results = data['resultats']
+        
+        # Format the email body
+        today = datetime.now().strftime("%d/%m/%Y")
+        body = f"""
+        Données du formulaire:
+        - Modèle: {form_data['modele']}
+        - Type de mesure: {form_data['choix']}
+        - Nombre de lots: {form_data['nb_lots']}
+        - Densité: {form_data['densite']}
+        - Réfraction: {form_data['refraction']}
+        
+        Résultats:
+        """
+        for product, value in results.items():
+            body += f"- Ajouter {value:.7f} d'{product}\n"
 
+        # Initialize yagmail
+        yag = yagmail.SMTP('test.prog.recup@gmail.com', 'bageklcszxvknxdh')
+        
+        # Send email
+        subject = f"Résultat correction EcoWash du {today}"
+        yag.send(to=recipient_email, subject=subject, contents=body)
+        
+        return jsonify({"success": True, "message": "Email sent successfully"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/calculate', methods=['POST'])
 def calculate():
@@ -205,14 +239,5 @@ def liste_fichiers_recette():
     fichiers = os.listdir(dossier_recette)
     return fichiers
 
-
-
-
-
-
-
-
 if __name__ == '__main__':
     app.run(port=5000, debug=True)
-
-

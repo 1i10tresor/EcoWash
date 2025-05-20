@@ -90,13 +90,13 @@ footer{
         color: rgb(231, 228, 222);
     }
     #topFooter{
-        height: 80%;
+        height: 90%;
         border: 1px solid black;
         background-color: rgb(48, 42, 42);
         display: flex;
     }
     #botFooter{
-        height: 20%;
+        height: 10%;
         border: 1px solid black;
         background-color: rgb(48, 42, 42);
         border-top: 0.5px solid rgb(241, 243, 220);
@@ -162,5 +162,15 @@ footer{
     #lienIn:hover, #contact:hover, #adresse:hover, #logo:hover{
         border-radius: 10px;
         transform: scale(1.05);
+    }
+
+    @media (max-width:768px) {
+        #topFooter {
+            flex-direction: column;
+            height: auto;
+            align-items: center;
+            justify-content: center;
+
+        }
     }
 </style>

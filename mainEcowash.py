@@ -10,11 +10,13 @@ CORS(app)
 
 # === Données du solvant initial ===
 def solvantInitial(fichier_excel):
-
+    print("Lancement de la fonction solvantInitial")
     base_dir = os.path.dirname(__file__)  # Répertoire du script actuel
+    print(base_dir)
     recette = os.path.join(base_dir, 'recette',fichier_excel)  # Chemin vers le dossier "recette"
     df = pd.read_excel(recette)
     solvant_initial = {}
+    print("middle")
     for _, row in df.iterrows():
         solvant_initial[row['Composant']] = {
             "concG": row['concG'],
@@ -34,10 +36,15 @@ def calculate():
         JSON: Un objet JSON contenant soit le résultat du calcul soit un message d'erreur
     """
     try:
+        print("Calcul en cours...1")
         data = request.get_json()
+        print("Calcul en cours...2")
         densite = float(data['densite'])
         indice_refraction = float(data['refraction'])
+        print("Calcul en cours...3")
         fichier_excel = str(data['fichier_excel']+'.xlsx') # Nom du fichier Excel par défaut
+        print(fichier_excel)
+
         
         # Lancement du processus de calcul
         result = etape_1(indice_refraction, densite, solvantInitial(fichier_excel))
@@ -66,6 +73,7 @@ def etape_1(n, d, sI):
     """
     print("Etape 1 done")
     try:
+        print("Correction des valeurs mesurées")
         # Correction pour l'éthanol
         fraction_etoh = sI["ETOH"]["concG"]
         ir_corrige = n - (fraction_etoh * sI["ETOH"]["IR"])

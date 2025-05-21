@@ -28,12 +28,12 @@
 
         <div id="saisie">
           <div class="zone_texte">
-            <label for="nb_lots">Nb de lots</label><br>
+            <label for="nb_lots">N° lot</label><br>
             <input type="number" id="nb_lots" lang="en" step="any" class="zone_saisie" v-model="donnees.nb_lots" name="nb_lots" placeholder="Nb lots">
           </div>
 
           <div class="zone_texte">
-            <label for="saisie_densite">Densité</label><br>
+            <label for="saisie_densite">Densité      </label><br>
             <input type="number" class="zone_saisie" step="any" lang="en" id="saisie_densite" v-model="donnees.densite" name="saisie" placeholder="Densité">
           </div>
 

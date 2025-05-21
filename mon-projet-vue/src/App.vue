@@ -1,5 +1,5 @@
 <template>
-  <div class="main_container">
+  <div id="main_container">
     <header>
       <h1>Calculateur d'additifs EcoAdd</h1>
     </header>
@@ -12,32 +12,28 @@
 
         <div id="topFooter">
 
-            <div id="logo">
+            <div id="logo" class="elements_footer">
                 <img src="../src/assets/logo.png" alt="Logo" />
             </div>
 
-            <div id="adresse">
+            <div id="adresse" class="elements_footer">
                 <h2>Spring Coating Systems</h2>
                 <p>18 rue de la Fabrique</p>
                 <p>68530 BUHL</p>
                 <p>Tél : 03 89 83 06 82</p>
             </div>
-            <div id="contact">
-                <h2>Contact</h2>
-                <a href="mailto:contact@spring-coating.com">contact@spring-coating.com</a>
+            <div id="contact" class="elements_footer">
+                <h2>Signaler un probleme</h2>
+                <a href="mailto:contact@spring-coating.com">ecowash.balancing@spring-coating.com</a>
                 
-                <p>Tél : 03 89 83 06 82</p>
+                <p>Tél : 07 60 11 07 85</p>
             </div>
 
-            <div id="description">
+            <div id="description" class="elements_footer">
                 <a href="https://www.linkedin.com/company/spring-coating-systems/" target="_blank" id="lienIn"><img id="linkedin" src="../src/assets/linkedin.png" alt="Logo"></a>
                 <p>Spring Coating Systems est formulateur et fabricant d’encres, vernis, colles, et peintures pour des applications industrielles et l’impression d'emballages. Nos produits sont souvent formulés sur mesure et adaptés à l’activité de nos clients. Les principaux produits de Spring Coating pour l'impression d'emballage sont : l’encre UV, l’encre pour contact alimentaire direct, les encres à l'eau et des encres de spécialité comme des encres « grattables », etc.</p>
             </div> 
 
-        </div>
-
-        <div id="botFooter">
-            <h3>Copyright 2025 Spring Coating Systems. All rights reserved</h3>
         </div>
     </footer>
   </div>
@@ -54,8 +50,9 @@ export default {
 </script>
 
 <style scoped>
+
 /* Conteneur principal */
-.main_container {
+#main_container {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
@@ -88,19 +85,13 @@ header h1 {
 footer{
         height: 120px;
         color: rgb(231, 228, 222);
+        box-shadow: 0 -5px 10px -5px rgba(0, 0, 0, 0.3);
     }
     #topFooter{
-        height: 90%;
+        height: 100%;
         border: 1px solid black;
-        background-color: rgb(48, 42, 42);
+        background-color: rgb(37, 34, 34);
         display: flex;
-    }
-    #botFooter{
-        height: 10%;
-        border: 1px solid black;
-        background-color: rgb(48, 42, 42);
-        border-top: 0.5px solid rgb(241, 243, 220);
-        font-size: x-small;
     }
 
     #logo{
@@ -144,11 +135,7 @@ footer{
         width: 100px;
         background-color: transparent !important;
     }
-    /* #linkedin:hover{
-        border-radius: 10px;
-        border: 1px solid rgb(241, 243, 220);
-    } */
-
+ 
     #lienIn{
         display: flex;
         justify-content: center;
@@ -166,11 +153,23 @@ footer{
 
     @media (max-width:768px) {
         #topFooter {
-            flex-direction: column;
+            flex-wrap: wrap;
             height: auto;
             align-items: center;
             justify-content: center;
 
+        }
+        #contact, #adresse, #logo, #description{
+            width: 50%;
+            padding: 10px;
+            text-align: center;
+        }
+        #main_container{
+            overflow-x: hidden;
+        }
+
+        .elements_footer{
+            border-bottom: 2px solid rgb(66, 65, 65);
         }
     }
 </style>

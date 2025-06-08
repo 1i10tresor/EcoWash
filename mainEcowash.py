@@ -6,26 +6,66 @@ import json
 import os
 import yagmail
 from datetime import datetime
+import sqlite3
+import uuid
 
 app = Flask(__name__)
 CORS(app)
 
+# Database initialization
+def init_db():
+    conn = sqlite3.connect('calculations.db')
+    c = conn.cursor()
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS calculations (
+            id TEXT PRIMARY KEY,
+            model TEXT,
+            measurement_type TEXT,
+            lot_number INTEGER,
+            density REAL,
+            refraction REAL,
+            result TEXT,
+            calculation_date TIMESTAMP,
+            email TEXT,
+            sent_email BOOLEAN DEFAULT FALSE
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+# Initialize database on startup
+init_db()
+
 # === Données du solvant initial ===
 def solvantInitial(fichier_excel):
     print("Lancement de la fonction solvantInitial")
-    base_dir = os.path.dirname(__file__)  # Répertoire du script actuel
+    base_dir = os.path.dirname(__file__)
     print(base_dir)
-    recette = os.path.join(base_dir, 'recette',fichier_excel)  # Chemin vers le dossier "recette"
+    recette = os.path.join(base_dir, 'recette',fichier_excel)
     df = pd.read_excel(recette)
     solvant_initial = {}
     print("middle")
     for _, row in df.iterrows():
         solvant_initial[row['Composant']] = {
-            "concG": row['concG'],
+            "concL": row['concL'],
             "density": row['density'],
             "IR": row['IR']
         }
     return solvant_initial
+
+def calculate_total_values(solvant_initial):
+    total_density = 0
+    total_ir = 0
+    
+    for component in solvant_initial.values():
+        total_density += component['density'] * component['concL']
+        total_ir += component['IR'] * component['concL']
+    
+    print(f"Valeurs totales du mélange initial:")
+    print(f"Densité totale: {total_density:.5f}")
+    print(f"IR total: {total_ir:.5f}")
+    
+    return total_density, total_ir
 
 @app.route('/send_mail', methods=['POST'])
 def send_mail():
@@ -34,10 +74,13 @@ def send_mail():
         recipient_email = data['email']
         form_data = data['donnees']
         results = data['resultats']
+        calc_id = data.get('calculationId')
         
         # Format the email body
         today = datetime.now().strftime("%d/%m/%Y")
         body = f"""
+        Calcul ID: {calc_id}
+
         Données du formulaire:
         - Modèle: {form_data['modele']}
         - Type de mesure: {form_data['choix']}
@@ -56,6 +99,18 @@ def send_mail():
         # Send email
         subject = f"Résultat correction EcoWash du {today}"
         yag.send(to=recipient_email, subject=subject, contents=body)
+
+        # Update database with email information
+        if calc_id:
+            conn = sqlite3.connect('calculations.db')
+            c = conn.cursor()
+            c.execute('''
+                UPDATE calculations 
+                SET email = ?, sent_email = TRUE 
+                WHERE id = ?
+            ''', (recipient_email, calc_id))
+            conn.commit()
+            conn.close()
         
         return jsonify({"success": True, "message": "Email sent successfully"})
     except Exception as e:
@@ -63,27 +118,59 @@ def send_mail():
 
 @app.route('/calculate', methods=['POST'])
 def calculate():
-    """
-    Point d'entrée principal de l'API Flask qui reçoit les données de densité et d'indice de réfraction.
-    
-    Returns:
-        JSON: Un objet JSON contenant soit le résultat du calcul soit un message d'erreur
-    """
     try:
-        print("Calcul en cours...1")
         data = request.get_json()
-        print("Calcul en cours...2")
         densite = float(data['densite'])
         indice_refraction = float(data['refraction'])
-        print("Calcul en cours...3")
-        fichier_excel = str(data['fichier_excel']+'.xlsx') # Nom du fichier Excel par défaut
-        print(fichier_excel)
+        fichier_excel = str(data['fichier_excel']+'.xlsx')
 
+        # Get initial solvent data
+        initial_solvent = solvantInitial(fichier_excel)
         
-        # Lancement du processus de calcul
-        result = etape_1(indice_refraction, densite, solvantInitial(fichier_excel))
-        print("Youpi, le résultat est prêt !")
-        return jsonify({"success": True, "result": result})
+        # Calculate total theoretical values
+        total_density, total_ir = calculate_total_values(initial_solvent)
+        
+        # Check if rebalancing is necessary
+        if (abs(total_density - densite) < 0.005 and 
+            abs(total_ir - indice_refraction) < 0.005):
+            return jsonify({
+                "success": True,
+                "message": "Le rééquilibrage n'est pas nécessaire",
+                "calculationId": str(uuid.uuid4())
+            })
+
+        # Calculate result if rebalancing is needed
+        result = etape_1(indice_refraction, densite, initial_solvent)
+
+        # Generate unique ID
+        calculation_id = str(uuid.uuid4())
+
+        # Store calculation in database
+        conn = sqlite3.connect('calculations.db')
+        c = conn.cursor()
+        c.execute('''
+            INSERT INTO calculations (
+                id, model, measurement_type, lot_number, density, 
+                refraction, result, calculation_date
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            calculation_id,
+            data['fichier_excel'],
+            data.get('choix', ''),
+            data.get('nb_lots', 0),
+            densite,
+            indice_refraction,
+            json.dumps(result),
+            datetime.now().isoformat()
+        ))
+        conn.commit()
+        conn.close()
+
+        return jsonify({
+            "success": True,
+            "result": result,
+            "calculationId": calculation_id
+        })
         
     except ValueError as e:
         return jsonify({"success": False, "error": "Valeurs numériques invalides"}), 400
@@ -96,20 +183,12 @@ def etape_1(n, d, sI):
     """
     Étape 1: Résolution du système d'équations pour trouver les concentrations des composants.
     Corrige les valeurs mesurées en soustrayant la contribution de l'éthanol.
-    
-    Args:
-        n (float): Indice de réfraction mesuré
-        d (float): Densité mesurée
-        sI (dict): Dictionnaire contenant les propriétés du solvant initial
-    
-    Returns:
-        dict: Résultats des calculs avec les concentrations et les additifs nécessaires
     """
     print("Etape 1 done")
     try:
         print("Correction des valeurs mesurées")
         # Correction pour l'éthanol
-        fraction_etoh = sI["ETOH"]["concG"]
+        fraction_etoh = sI["ETOH"]["concL"]
         ir_corrige = n - (fraction_etoh * sI["ETOH"]["IR"])
         densite_corrigee = d - (fraction_etoh * sI["ETOH"]["density"])
         somme_fractions = 1.0 - fraction_etoh
@@ -138,22 +217,13 @@ def etape_1(n, d, sI):
 def etape_2(x, y, z, sI):
     """
     Étape 2: Détermine quel composant est en excès en comparant les ratios actuels avec les ratios initiaux.
-    
-    Args:
-        x (float): Concentration de ISOL dans le mélange déséquilibré
-        y (float): Concentration de BZOH dans le mélange déséquilibré
-        z (float): Concentration de DIPB dans le mélange déséquilibré
-        sI (dict): Dictionnaire contenant les propriétés du solvant initial
-    
-    Returns:
-        dict: Résultats avec les concentrations et les quantités d'additifs nécessaires
     """
     print("Etape 2 done")
     try:
         # Calcul des ratios initiaux
-        a = sI["ISOL"]["concG"] / sI["BZOH"]["concG"]
-        b = sI["DIPB"]["concG"] / sI["BZOH"]["concG"]
-        c = sI["DIPB"]["concG"] / sI["ISOL"]["concG"]
+        a = sI["ISOL"]["concL"] / sI["BZOH"]["concL"]
+        b = sI["DIPB"]["concL"] / sI["BZOH"]["concL"]
+        c = sI["DIPB"]["concL"] / sI["ISOL"]["concL"]
 
         # Calcul des ratios actuels
         a_ = x/y
@@ -179,16 +249,6 @@ def etape_2(x, y, z, sI):
 def etape_3(x, y, z, sI, ex, ABC, ABC_):
     """
     Étape 3: Calcule les quantités d'additifs nécessaires pour rééquilibrer le solvant.
-    
-    Args:
-        x, y, z (float): Concentrations des composants
-        sI (dict): Propriétés du solvant initial
-        ex (str): Identifiant du composant en excès ("1"=ISOL, "2"=BZOH, "3"=DIPB)
-        ABC (tuple): Ratios initiaux (a, b, c)
-        ABC_ (tuple): Ratios actuels (a_, b_, c_)
-    
-    Returns:
-        dict: Dictionnaire contenant les fractions et les quantités d'additifs
     """
     print("Etape 3 done")
     try:
@@ -199,15 +259,15 @@ def etape_3(x, y, z, sI, ex, ABC, ABC_):
             dipb_cible = ABC[2] * x
             delta_bzoh = bzoh_cible - y
             delta_dipb = dipb_cible - z
-            additives["EcoAdd 2"] = delta_bzoh / 0.81  # 0.81 = concentration de BZOH pur
-            additives["EcoAdd 3"] = delta_dipb / 0.83   # 0.83 = concentration de DIPB pur
+            additives["EcoAdd 2"] = delta_bzoh / 0.81
+            additives["EcoAdd 3"] = delta_dipb / 0.83
             
         elif ex == "2":  # BZOH en excès
             isol_cible = ABC_[0] * y
             dipb_cible = ABC[1] * y
             delta_isol = isol_cible - x
             delta_dipb = dipb_cible - z
-            additives["EcoAdd 1"] = delta_isol / 0.852  # 0.852 = concentration de ISOL pur
+            additives["EcoAdd 1"] = delta_isol / 0.852
             additives["EcoAdd 3"] = delta_dipb / 0.83
             
         elif ex == "3":  # DIPB en excès
@@ -227,15 +287,13 @@ def etape_3(x, y, z, sI, ex, ABC, ABC_):
     
 @app.route('/recette', methods=['GET'])
 def liste_fichiers_recette():
-    base_dir = os.path.dirname(__file__)  # Répertoire du script actuel
-    dossier_recette = os.path.join(base_dir, 'recette')  # Chemin vers le dossier "recette"
+    base_dir = os.path.dirname(__file__)
+    dossier_recette = os.path.join(base_dir, 'recette')
     
-    # Vérifier si le dossier existe
     if not os.path.exists(dossier_recette):
         print(f"Le dossier {dossier_recette} n'existe pas.")
         return []
     
-    # Lister les fichiers
     fichiers = os.listdir(dossier_recette)
     return fichiers
 

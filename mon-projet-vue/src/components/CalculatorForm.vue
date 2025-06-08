@@ -34,23 +34,30 @@
 
           <div class="zone_texte">
             <label for="saisie_densite">Densité      </label><br>
-            <input type="number" class="zone_saisie" step="any" lang="en" id="saisie_densite" v-model="donnees.densite" name="saisie" placeholder="Densité">
+            <input type="number" class="zone_saisie" step="any" lang="en" id="saisie_densite" v-model="donnees.densite" name="saisie" placeholder="Densité" @input="resetCalculation">
           </div>
 
           <div class="zone_texte">
-            <label for="saisie_refraction">Réfraction</label><br>
-            <input type="number" class="zone_saisie" step="any" lang="en" id="saisie_refraction" v-model="donnees.refraction" name="saisie" placeholder="Réfraction">
+            <label for="saisie_refraction">{{ donnees.choix === 'BRIX' ? 'BRIX' : 'I.R' }}</label><br>
+            <input type="number" class="zone_saisie" step="any" lang="en" id="saisie_refraction" v-model="donnees.refraction" name="saisie" :placeholder="donnees.choix === 'BRIX' ? 'BRIX' : 'Réfraction'" @input="resetCalculation">
           </div>
         </div>
 
         <button type="submit" :disabled="!isFormValid">Calculer</button>
         
-        <div id="resultat" v-if="resultat_corrige && Object.keys(resultat_corrige).length">
-          <div v-if="Object.keys(resultat_corrige).length === 2">
-            <p>Résultat</p>
+        <div id="resultat" v-if="resultat">
+          <div v-if="resultat.message">
+            <p>{{ resultat.message }}</p>
+            <p> - - - - - - - -  </p>
+            <p>ID calcul : {{ calculationId }}</p>
+          </div>
+          <div v-else-if="resultat_corrige && Object.keys(resultat_corrige).length === 2">
+            <p>Résultat :</p>
             <li v-for="(value, key) in resultat_corrige" :key="key">
               Ajouter {{ value.toFixed(7) }} d'{{ key }}
             </li>
+            <p> - - - - - - - -  </p>
+            <p>ID calcul : {{ calculationId }}</p>
             <button type="button" @click="showEmailForm = true" class="email-button">Envoyer par mail</button>
           </div>
           <div v-else>
@@ -79,7 +86,7 @@
 </template>
 
 <script>
-import { computed, reactive, ref } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 import axios from 'axios';
 
 export default {
@@ -98,6 +105,7 @@ export default {
     const liste_recettes = ref([]);
     const showEmailForm = ref(false);
     const email = ref('');
+    const calculationId = ref(null);
     
     const liste_recettes_corrigee = computed(() =>
       liste_recettes.value.map(nom =>
@@ -124,6 +132,19 @@ export default {
              donnees.refraction !== 0;
     });
 
+    // Reset calculation when form values change
+    const resetCalculation = () => {
+      resultat.value = null;
+      calculationId.value = null;
+      showEmailForm.value = false;
+      email.value = '';
+    };
+
+    // Watch for changes in form values
+    watch(() => donnees.modele, resetCalculation);
+    watch(() => donnees.choix, resetCalculation);
+    watch(() => donnees.nb_lots, resetCalculation);
+
     const recup_liste_recettes = async () => {
       try {
         const response = await axios.get('http://127.0.0.1:5000/recette');
@@ -143,12 +164,21 @@ export default {
 
     const calculate = async () => {
       try {
+        let refractionValue = donnees.refraction;
+        if (donnees.choix === 'BRIX') {
+          refractionValue = (refractionValue / 476.21) + 1.3215;
+        }
+
         const response = await axios.post('http://127.0.0.1:5000/calculate', {
           densite: donnees.densite,
-          refraction: donnees.refraction,
-          fichier_excel: donnees.modele
+          refraction: refractionValue,
+          fichier_excel: donnees.modele,
+          choix: donnees.choix,
+          nb_lots: donnees.nb_lots
         });
+        
         resultat.value = response.data;
+        calculationId.value = response.data.calculationId;
       } catch (err) {
         console.error('Erreur lors de la requête :', err);
         erreur.value = 'Erreur lors du calcul';
@@ -168,7 +198,8 @@ export default {
             choix: donnees.choix,
             modele: donnees.modele,
             nb_lots: donnees.nb_lots
-          }
+          },
+          calculationId: calculationId.value
         });
         showEmailForm.value = false;
         email.value = '';
@@ -193,7 +224,9 @@ export default {
       showEmailForm,
       email,
       isValidEmail,
-      sendEmail
+      sendEmail,
+      calculationId,
+      resetCalculation
     };
   },
 };

@@ -543,20 +543,21 @@ a {
 @media (max-width: 768px) {
   header {
     padding: 15px;
-    /* Garde la disposition flex horizontale */
-    justify-content: space-between;
-    align-items: center;
+    /* Garde la disposition flex horizontale mais avec positionnement relatif */
+    position: relative;
   }
 
-  /* Le logo prend maintenant la majeure partie de l'espace */
+  /* Le logo est maintenant centré absolument par rapport à toute la largeur */
   #logo-container {
-    flex: 1;
-    justify-content: center;
-    margin: 0;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1;
   }
 
   #header-logo {
-    max-height: 50px;
+    max-height: 55px; /* Logo un peu plus gros */
   }
 
   /* Le titre disparaît complètement sur mobile */
@@ -564,10 +565,11 @@ a {
     display: none;
   }
 
-  /* Le sélecteur de langue reste à droite mais plus compact */
+  /* Le sélecteur de langue reste à droite */
   #language-switcher {
-    flex: 0 0 auto;
-    margin-left: 10px;
+    position: relative;
+    z-index: 2;
+    margin-left: auto;
   }
 
   .language-selector {
@@ -643,7 +645,7 @@ a {
   }
 
   #header-logo {
-    max-height: 45px;
+    max-height: 50px; /* Logo un peu plus gros même sur très petits écrans */
   }
 
   .language-selector {

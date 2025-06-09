@@ -314,51 +314,99 @@ def liste_fichiers_recette():
 def send_mail():
     """Send calculation results via email"""
     try:
+        # Validate request data
         data = request.get_json()
+        if not data:
+            return jsonify({"success": False, "error": "Aucune donnée reçue"}), 400
+        
+        # Check required fields
+        required_fields = ['email', 'donnees', 'resultats']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({"success": False, "error": f"Champ manquant: {field}"}), 400
+        
         recipient_email = data['email']
         form_data = data['donnees']
         results = data['resultats']
-        calc_id = data.get('calculationId')
+        calc_id = data.get('calculationId', 'N/A')
+        
+        # Validate email format
+        import re
+        email_pattern = r'^[^\s@]+@[^\s@]+\.[^\s@]+$'
+        if not re.match(email_pattern, recipient_email):
+            return jsonify({"success": False, "error": "Format d'email invalide"}), 400
+        
+        # Validate that we have results to send
+        if not results or len(results) == 0:
+            return jsonify({"success": False, "error": "Aucun résultat à envoyer"}), 400
         
         # Format the email body
-        today = datetime.now().strftime("%d/%m/%Y")
-        body = f"""
-        Calcul ID: {calc_id}
+        today = datetime.now().strftime("%d/%m/%Y à %H:%M")
+        body = f"""Bonjour,
 
-        Données du formulaire:
-        - Modèle: {form_data['modele']}
-        - Type de mesure: {form_data['choix']}
-        - Nombre de lots: {form_data['nb_lots']}
-        - Densité: {form_data['densite']}
-        - Réfraction: {form_data['refraction']}
+Voici les résultats de votre calcul EcoWash effectué le {today}.
+
+ID du calcul: {calc_id}
+
+Données saisies:
+- Modèle: {form_data.get('modele', 'N/A')}
+- Type de mesure: {form_data.get('choix', 'N/A')}
+- Densité: {form_data.get('densite', 'N/A')}
+- Réfraction: {form_data.get('refraction', 'N/A')}
+
+Résultats - Additifs à ajouter:
+"""
         
-        Résultats:
-        """
         for product, value in results.items():
-            body += f"- Ajouter {value:.7f} d'{product}\n"
+            body += f"- {value:.7f} de {product}\n"
 
-        # Initialize yagmail
-        yag = yagmail.SMTP('test.prog.recup@gmail.com', 'bageklcszxvknxdh')
+        body += f"""
+
+Cordialement,
+L'équipe Spring Coating Systems
+
+---
+Ce message a été généré automatiquement par le système EcoWash.
+Pour toute question, contactez-nous à ecowash@spring-coating.com
+"""
+
+        # Initialize yagmail with error handling
+        try:
+            yag = yagmail.SMTP('test.prog.recup@gmail.com', 'bageklcszxvknxdh')
+        except Exception as e:
+            print(f"Erreur de connexion SMTP: {str(e)}")
+            return jsonify({"success": False, "error": "Erreur de configuration email"}), 500
         
         # Send email
-        subject = f"Résultat correction EcoWash du {today}"
-        yag.send(to=recipient_email, subject=subject, contents=body)
+        try:
+            subject = f"Résultat correction EcoWash du {today.split(' à ')[0]}"
+            yag.send(to=recipient_email, subject=subject, contents=body)
+            yag.close()
+        except Exception as e:
+            print(f"Erreur d'envoi email: {str(e)}")
+            return jsonify({"success": False, "error": f"Erreur d'envoi: {str(e)}"}), 500
 
         # Update database with email information
-        if calc_id:
-            conn = sqlite3.connect('calculations.db')
-            c = conn.cursor()
-            c.execute('''
-                UPDATE calculations 
-                SET email = ?, sent_email = TRUE 
-                WHERE id = ?
-            ''', (recipient_email, calc_id))
-            conn.commit()
-            conn.close()
+        if calc_id and calc_id != 'N/A':
+            try:
+                conn = sqlite3.connect('calculations.db')
+                c = conn.cursor()
+                c.execute('''
+                    UPDATE calculations 
+                    SET email = ?, sent_email = TRUE 
+                    WHERE id = ?
+                ''', (recipient_email, calc_id))
+                conn.commit()
+                conn.close()
+            except Exception as e:
+                print(f"Erreur de mise à jour base de données: {str(e)}")
+                # Don't fail the request if database update fails
         
-        return jsonify({"success": True, "message": "Email sent successfully"})
+        return jsonify({"success": True, "message": "Email envoyé avec succès"})
+        
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+        print(f"Erreur générale dans send_mail: {str(e)}")
+        return jsonify({"success": False, "error": f"Erreur interne: {str(e)}"}), 500
 
 if __name__ == '__main__':
     app.run(port=5000, debug=True)

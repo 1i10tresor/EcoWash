@@ -42,7 +42,18 @@
         
         <!-- Error display -->
         <div v-if="erreur" class="error-message">
-          <p>{{ translations[currentLanguage].error }}: {{ erreur }}</p>
+          <div class="error-header">
+            <span class="error-icon">⚠️</span>
+            <strong>{{ translations[currentLanguage].error }}</strong>
+          </div>
+          <div class="error-content">
+            {{ erreur }}
+          </div>
+          <div class="error-actions">
+            <button type="button" @click="clearError" class="clear-error-btn">
+              {{ translations[currentLanguage].dismiss }}
+            </button>
+          </div>
         </div>
         
         <div id="resultat" v-if="resultat">
@@ -75,15 +86,28 @@
           <button 
             type="button" 
             @click="sendEmail" 
-            :disabled="!isValidEmail || !email"
+            :disabled="!isValidEmail || !email || isEmailSending"
+            class="email-send-btn"
           >
-            {{ translations[currentLanguage].validate }}
+            <span v-if="isEmailSending" class="loading-spinner">⏳</span>
+            {{ isEmailSending ? translations[currentLanguage].sending : translations[currentLanguage].validate }}
           </button>
         </div>
 
         <!-- Email success/error messages -->
         <div v-if="emailStatus" class="email-status" :class="emailStatus.type">
-          <p>{{ emailStatus.message }}</p>
+          <div class="status-header">
+            <span class="status-icon">{{ emailStatus.type === 'success' ? '✅' : '❌' }}</span>
+            <strong>{{ emailStatus.type === 'success' ? translations[currentLanguage].success : translations[currentLanguage].error }}</strong>
+          </div>
+          <div class="status-content">
+            {{ emailStatus.message }}
+          </div>
+          <div class="status-actions">
+            <button type="button" @click="clearEmailStatus" class="clear-status-btn">
+              {{ translations[currentLanguage].dismiss }}
+            </button>
+          </div>
         </div>
       </form>  
     </div>
@@ -105,6 +129,7 @@ export default {
       choix: '',
       densite: 0,
       refraction: 0,
+      nb_lots: 1 // Ajout du champ nb_lots avec valeur par défaut
     });
 
     const resultat = ref(null);
@@ -114,6 +139,7 @@ export default {
     const email = ref('');
     const calculationId = ref(null);
     const emailStatus = ref(null);
+    const isEmailSending = ref(false);
     
     const liste_recettes_corrigee = computed(() =>
       liste_recettes.value.map(nom =>
@@ -140,6 +166,16 @@ export default {
              donnees.refraction !== 0;
     });
 
+    // Clear error message
+    const clearError = () => {
+      erreur.value = null;
+    };
+
+    // Clear email status
+    const clearEmailStatus = () => {
+      emailStatus.value = null;
+    };
+
     // Reset calculation when form values change
     const resetCalculation = () => {
       resultat.value = null;
@@ -148,6 +184,7 @@ export default {
       email.value = '';
       erreur.value = null;
       emailStatus.value = null;
+      isEmailSending.value = false;
     };
 
     // Watch for changes in form values
@@ -156,7 +193,7 @@ export default {
 
     const recup_liste_recettes = async () => {
       try {
-        const response = await axios.get('http://127.0.0.1:5000/recette');
+        const response = await axios.get('http://192.168.1.8:5000/recette');
         liste_recettes.value = response.data;
         erreur.value = null;
       } catch (err) {
@@ -180,11 +217,12 @@ export default {
           refractionValue = (refractionValue / 476.21) + 1.3215;
         }
 
-        const response = await axios.post('http://127.0.0.1:5000/calculate', {
+        const response = await axios.post('http://192.168.1.8:5000/calculate', {
           densite: donnees.densite,
           refraction: refractionValue,
           fichier_excel: donnees.modele,
-          choix: donnees.choix
+          choix: donnees.choix,
+          nb_lots: donnees.nb_lots // Ajout du champ nb_lots
         });
         
         if (response.data.success) {
@@ -206,18 +244,21 @@ export default {
     };
 
     const sendEmail = async () => {
-      if (!isValidEmail.value) return;
+      if (!isValidEmail.value || isEmailSending.value) return;
       
       try {
+        isEmailSending.value = true;
         emailStatus.value = null;
-        const response = await axios.post('http://127.0.0.1:5000/send_mail', {
+        
+        const response = await axios.post('http://192.168.1.8:5000/send_mail', {
           email: email.value,
           resultats: resultat_corrige.value,
           donnees: {
             densite: donnees.densite,
             refraction: donnees.refraction,
             choix: donnees.choix,
-            modele: donnees.modele
+            modele: donnees.modele,
+            nb_lots: donnees.nb_lots // Ajout du champ nb_lots dans l'envoi email
           },
           calculationId: calculationId.value
         });
@@ -237,10 +278,20 @@ export default {
         }
       } catch (err) {
         console.error('Erreur lors de l\'envoi du mail :', err);
+        let errorMessage = translations.value[currentLanguage.value].emailError;
+        
+        if (err.response && err.response.data && err.response.data.error) {
+          errorMessage = err.response.data.error;
+        } else if (err.code === 'ECONNREFUSED' || err.code === 'ERR_NETWORK') {
+          errorMessage = translations.value[currentLanguage.value].connectionError;
+        }
+        
         emailStatus.value = {
           type: 'error',
-          message: translations.value[currentLanguage.value].emailError
+          message: errorMessage
         };
+      } finally {
+        isEmailSending.value = false;
       }
     };
 
@@ -265,7 +316,10 @@ export default {
       resetCalculation,
       currentLanguage,
       translations,
-      emailStatus
+      emailStatus,
+      isEmailSending,
+      clearError,
+      clearEmailStatus
     };
   },
 };
@@ -274,7 +328,8 @@ export default {
 <style scoped>
 /* Conteneur principal */
 #calculator {
-  width: 400px;
+  width: 100%;
+  max-width: 400px;
   padding: 20px;
   border-radius: 10px;
   background: #f9f9f9;
@@ -284,6 +339,8 @@ export default {
   justify-content: space-between;
   border: 1px solid #ddd;
   font-family: 'Space Mono', monospace;
+  margin: 0 auto;
+  box-sizing: border-box;
 }
 
 /* Titre */
@@ -336,6 +393,7 @@ h1 {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
   margin-bottom: 5px;
+  text-align: left; /* Alignement à gauche */
 }
 
 .zone_saisie {
@@ -373,15 +431,59 @@ h1 {
   color: #333;
 }
 
+/* Messages d'erreur améliorés */
 .error-message {
-  color: #ff0000;
-  font-weight: bold;
   margin-top: 15px;
-  padding: 10px;
-  background-color: #fff0f0;
-  border: 1px solid #ffcccc;
-  border-radius: 5px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
+  border: 1px solid #fc8181;
+  box-shadow: 0 4px 12px rgba(252, 129, 129, 0.15);
   font-family: 'Space Mono', monospace;
+  overflow: hidden;
+  animation: slideIn 0.3s ease-out;
+}
+
+.error-header {
+  background: #fed7d7;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid #fc8181;
+}
+
+.error-icon {
+  font-size: 18px;
+}
+
+.error-content {
+  padding: 16px;
+  color: #742a2a;
+  line-height: 1.5;
+}
+
+.error-actions {
+  padding: 12px 16px;
+  background: #fff5f5;
+  border-top: 1px solid #fed7d7;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.clear-error-btn {
+  background: #e53e3e;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-family: 'Space Mono', monospace;
+}
+
+.clear-error-btn:hover {
+  background: #c53030;
 }
 
 /* Email form */
@@ -405,7 +507,7 @@ h1 {
   background-color: #fff0f0;
 }
 
-.email-form button {
+.email-send-btn {
   padding: 8px 15px;
   background-color: #4CAF50;
   color: white;
@@ -415,11 +517,27 @@ h1 {
   transition: all 0.3s ease;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
-.email-form button:disabled {
+.email-send-btn:disabled {
   background-color: #cccccc;
   cursor: not-allowed;
+}
+
+.email-send-btn:not(:disabled):hover {
+  background-color: #45a049;
+}
+
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .email-button {
@@ -439,25 +557,115 @@ h1 {
   background-color: #45a049;
 }
 
-/* Email status messages */
+/* Messages de statut email améliorés */
 .email-status {
   margin-top: 15px;
-  padding: 10px;
-  border-radius: 5px;
-  font-weight: bold;
+  border-radius: 8px;
   font-family: 'Space Mono', monospace;
+  overflow: hidden;
+  animation: slideIn 0.3s ease-out;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .email-status.success {
-  background-color: #f0fff0;
-  color: #4CAF50;
-  border: 1px solid #ccffcc;
+  background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%);
+  border: 1px solid #68d391;
 }
 
 .email-status.error {
-  background-color: #fff0f0;
-  color: #ff0000;
-  border: 1px solid #ffcccc;
+  background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
+  border: 1px solid #fc8181;
+}
+
+.status-header {
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: bold;
+}
+
+.email-status.success .status-header {
+  background: #c6f6d5;
+  color: #22543d;
+  border-bottom: 1px solid #68d391;
+}
+
+.email-status.error .status-header {
+  background: #fed7d7;
+  color: #742a2a;
+  border-bottom: 1px solid #fc8181;
+}
+
+.status-icon {
+  font-size: 18px;
+}
+
+.status-content {
+  padding: 16px;
+  line-height: 1.5;
+}
+
+.email-status.success .status-content {
+  color: #22543d;
+}
+
+.email-status.error .status-content {
+  color: #742a2a;
+}
+
+.status-actions {
+  padding: 12px 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.email-status.success .status-actions {
+  background: #f0fff4;
+  border-top: 1px solid #c6f6d5;
+}
+
+.email-status.error .status-actions {
+  background: #fff5f5;
+  border-top: 1px solid #fed7d7;
+}
+
+.clear-status-btn {
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-family: 'Space Mono', monospace;
+  color: white;
+}
+
+.email-status.success .clear-status-btn {
+  background: #38a169;
+}
+
+.email-status.success .clear-status-btn:hover {
+  background: #2f855a;
+}
+
+.email-status.error .clear-status-btn {
+  background: #e53e3e;
+}
+
+.email-status.error .clear-status-btn:hover {
+  background: #c53030;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Bouton */
@@ -608,5 +816,52 @@ select option:hover {
 #choix span {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
+}
+
+/* Responsive design pour mobile */
+@media (max-width: 768px) {
+  #calculator {
+    width: 100%;
+    max-width: 350px;
+    padding: 15px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    font-size: 20px;
+  }
+
+  #saisie {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .zone_texte {
+    width: 100%;
+  }
+
+  select {
+    width: 100%;
+    max-width: 250px;
+  }
+}
+
+@media (max-width: 480px) {
+  #calculator {
+    padding: 10px;
+    max-width: 320px;
+  }
+
+  h1 {
+    font-size: 18px;
+  }
+
+  #choix {
+    gap: 20px;
+  }
+
+  select {
+    max-width: 200px;
+  }
 }
 </style>

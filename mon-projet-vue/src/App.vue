@@ -3,15 +3,22 @@
     <header>
       <h1>{{ translations[currentLanguage].headerTitle }}</h1>
       <div id="language-switcher">
-        <button 
-          v-for="lang in languages" 
-          :key="lang.code"
-          @click="changeLanguage(lang.code)"
-          :class="{ active: currentLanguage === lang.code }"
-          class="lang-btn"
-        >
-          {{ lang.flag }} {{ lang.name }}
-        </button>
+        <div class="language-selector" @click="toggleLanguageMenu" ref="languageSelector">
+          <img :src="currentFlag" :alt="currentLanguage" class="current-flag">
+          <span class="arrow" :class="{ 'open': showLanguageMenu }">▼</span>
+          
+          <div v-if="showLanguageMenu" class="language-menu">
+            <div 
+              v-for="lang in otherLanguages" 
+              :key="lang.code"
+              @click.stop="changeLanguage(lang.code)"
+              class="language-option"
+            >
+              <img :src="lang.flag" :alt="lang.code" class="flag-option">
+              <span>{{ lang.name }}</span>
+            </div>
+          </div>
+        </div>
       </div>
     </header>
 
@@ -50,7 +57,7 @@
 </template>
 
 <script>
-import { ref, provide } from 'vue';
+import { ref, provide, computed, onMounted, onUnmounted } from 'vue';
 import CalculatorForm from './components/CalculatorForm.vue';
 
 export default {
@@ -58,12 +65,23 @@ export default {
   components: { CalculatorForm },
   setup() {
     const currentLanguage = ref('fr');
+    const showLanguageMenu = ref(false);
+    const languageSelector = ref(null);
     
     const languages = [
-      { code: 'fr', name: 'FR', flag: '🇫🇷' },
-      { code: 'en', name: 'EN', flag: '🇬🇧' },
-      { code: 'de', name: 'DE', flag: '🇩🇪' }
+      { code: 'fr', name: 'Français', flag: '/france.png' },
+      { code: 'en', name: 'English', flag: '/etats-unis.png' },
+      { code: 'de', name: 'Deutsch', flag: '/allemagne.png' }
     ];
+
+    const currentFlag = computed(() => {
+      const lang = languages.find(l => l.code === currentLanguage.value);
+      return lang ? lang.flag : '/france.png';
+    });
+
+    const otherLanguages = computed(() => {
+      return languages.filter(l => l.code !== currentLanguage.value);
+    });
 
     const translations = ref({
       fr: {
@@ -148,7 +166,26 @@ export default {
 
     const changeLanguage = (langCode) => {
       currentLanguage.value = langCode;
+      showLanguageMenu.value = false;
     };
+
+    const toggleLanguageMenu = () => {
+      showLanguageMenu.value = !showLanguageMenu.value;
+    };
+
+    const handleClickOutside = (event) => {
+      if (languageSelector.value && !languageSelector.value.contains(event.target)) {
+        showLanguageMenu.value = false;
+      }
+    };
+
+    onMounted(() => {
+      document.addEventListener('click', handleClickOutside);
+    });
+
+    onUnmounted(() => {
+      document.removeEventListener('click', handleClickOutside);
+    });
 
     // Provide the reactive values to child components
     provide('currentLanguage', currentLanguage);
@@ -158,7 +195,12 @@ export default {
       currentLanguage,
       languages,
       translations,
-      changeLanguage
+      changeLanguage,
+      showLanguageMenu,
+      toggleLanguageMenu,
+      currentFlag,
+      otherLanguages,
+      languageSelector
     };
   }
 };
@@ -172,18 +214,24 @@ export default {
   min-height: 100vh;
   font-family: 'Roboto', sans-serif;
   color: #333;
+  background-image: url('/bg_thin.png');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
 }
 
 /* Header */
 header {
-  background-color: #4CAF50;
-  color: white;
+  background-color:#FCFCFC;
+  color: #45a049;
   padding: 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   position: relative;
+  backdrop-filter: blur(10px);
 }
 
 header h1 {
@@ -195,36 +243,81 @@ header h1 {
 
 /* Language switcher */
 #language-switcher {
-  display: flex;
-  gap: 5px;
   position: absolute;
   top: 20px;
   right: 20px;
 }
 
-.lang-btn {
-  background-color: rgba(255, 255, 255, 0.2);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  padding: 8px 12px;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 12px;
-  transition: all 0.3s ease;
+.language-selector {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 8px;
+  background-color: rgba(255, 255, 255, 0.2);
+  padding: 8px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
-.lang-btn:hover {
+.language-selector:hover {
   background-color: rgba(255, 255, 255, 0.3);
   transform: translateY(-2px);
 }
 
-.lang-btn.active {
-  background-color: rgba(255, 255, 255, 0.9);
-  color: #4CAF50;
-  font-weight: bold;
+.current-flag {
+  width: 25px;
+  height: 25px;
+  object-fit: cover;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.arrow {
+  font-size: 12px;
+  transition: transform 0.3s ease;
+  color: FCFCFC;
+}
+
+.arrow.open {
+  transform: rotate(180deg);
+}
+
+.language-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  background-color: #FCFCFC;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  z-index: 1000;
+  min-width: 140px;
+}
+
+.language-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  color: #333;
+  font-size: 14px;
+}
+
+.language-option:hover {
+  background-color: #f5f5f5;
+}
+
+.flag-option {
+  width: 25px;
+  height: 25px;
+  object-fit: cover;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 /* Contenu principal */
@@ -233,6 +326,7 @@ header h1 {
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 20px;
 }
 
 footer {
@@ -244,8 +338,9 @@ footer {
 #topFooter {
   height: 100%;
   border: 1px solid black;
-  background-color: rgb(37, 34, 34);
+  background-color: rgba(37, 34, 34, 0.95);
   display: flex;
+  backdrop-filter: blur(10px);
 }
 
 #logo {
@@ -318,7 +413,7 @@ a {
 
   #language-switcher {
     position: static;
-    justify-content: center;
+    align-self: flex-end;
   }
 
   header h1 {
@@ -345,6 +440,11 @@ a {
 
   .elements_footer {
     border-bottom: 2px solid rgb(66, 65, 65);
+  }
+
+  .language-menu {
+    right: auto;
+    left: 0;
   }
 }
 </style>

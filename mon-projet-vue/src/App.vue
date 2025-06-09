@@ -542,50 +542,53 @@ a {
 
 @media (max-width: 768px) {
   header {
-    flex-direction: column;
-    gap: 15px;
     padding: 15px;
+    /* Garde la disposition flex horizontale */
+    justify-content: space-between;
+    align-items: center;
   }
 
+  /* Le logo prend maintenant la majeure partie de l'espace */
   #logo-container {
-    flex: none;
-    width: 100%;
+    flex: 1;
     justify-content: center;
-    margin-bottom: 10px;
+    margin: 0;
   }
 
+  #header-logo {
+    max-height: 50px;
+  }
+
+  /* Le titre disparaît complètement sur mobile */
   #title-container {
-    position: static;
-    transform: none;
-    width: 100%;
-  }
-
-  #title-container h1 {
-    text-align: center;
-    font-size: 24px;
-    white-space: normal;
-  }
-
-  /* Affichage des titres sur mobile */
-  .desktop-title {
     display: none;
   }
 
-  .mobile-title {
-    display: block;
+  /* Le sélecteur de langue reste à droite mais plus compact */
+  #language-switcher {
+    flex: 0 0 auto;
+    margin-left: 10px;
   }
 
-  #language-switcher {
-    flex: none;
-    width: 100%;
-    display: flex;
-    justify-content: center;
+  .language-selector {
+    padding: 6px;
+  }
+
+  .current-flag {
+    width: 20px;
+    height: 20px;
   }
 
   .language-menu {
-    right: auto;
-    left: 50%;
-    transform: translateX(-50%);
+    right: 0;
+    left: auto;
+    transform: none;
+    min-width: 120px;
+  }
+
+  .flag-option {
+    width: 20px;
+    height: 20px;
   }
 
   /* Centrage du calculateur sur mobile */
@@ -635,6 +638,28 @@ a {
 }
 
 @media (max-width: 480px) {
+  header {
+    padding: 10px;
+  }
+
+  #header-logo {
+    max-height: 45px;
+  }
+
+  .language-selector {
+    padding: 5px;
+  }
+
+  .current-flag {
+    width: 18px;
+    height: 18px;
+  }
+
+  .flag-option {
+    width: 18px;
+    height: 18px;
+  }
+
   .elements_footer {
     padding: 12px 10px;
   }

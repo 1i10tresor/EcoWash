@@ -1,7 +1,12 @@
 <template>
   <div id="main_container">
     <header>
-      <h1>{{ translations[currentLanguage].headerTitle }}</h1>
+      <div id="logo-container">
+        <img src="/logoEcoWash.png" alt="EcoWash Logo" id="header-logo" />
+      </div>
+      <div id="title-container">
+        <h1>{{ translations[currentLanguage].headerTitle }}</h1>
+      </div>
       <div id="language-switcher">
         <div class="language-selector" @click="toggleLanguageMenu" ref="languageSelector">
           <img :src="currentFlag" :alt="currentLanguage" class="current-flag">
@@ -41,7 +46,7 @@
         
         <div id="contact" class="elements_footer">
           <h2>{{ translations[currentLanguage].reportProblem }}</h2>
-          <a href="mailto:ecowash.balancing@spring-coating.com">ecowash.balancing@spring-coating.com</a>
+          <a href="mailto:ecowash@spring-coating.com">ecowash@spring-coating.com</a>
           <p>{{ translations[currentLanguage].phone }} : 07 60 11 07 85</p>
         </div>
 
@@ -212,7 +217,7 @@ export default {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  font-family: 'Roboto', sans-serif;
+  font-family: 'Space Mono', monospace;
   color: #333;
   background-image: url('/bg_thin.png');
   background-size: cover;
@@ -223,7 +228,7 @@ export default {
 
 /* Header */
 header {
-  background-color:#FCFCFC;
+  background-color: #FCFCFC;
   color: #45a049;
   padding: 20px;
   display: flex;
@@ -234,18 +239,43 @@ header {
   backdrop-filter: blur(10px);
 }
 
-header h1 {
+/* Logo container - occupe 75% de l'espace */
+#logo-container {
+  flex: 0 0 75%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+#header-logo {
+  max-height: 60px;
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+/* Conteneur du titre - centré absolument */
+#title-container {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+}
+
+#title-container h1 {
   margin: 0;
   font-size: 28px;
-  flex: 1;
   text-align: center;
+  white-space: nowrap;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
 }
 
 /* Language switcher */
 #language-switcher {
-  position: absolute;
-  top: 20px;
-  right: 20px;
+  flex: 0 0 auto;
+  z-index: 2;
 }
 
 .language-selector {
@@ -277,7 +307,8 @@ header h1 {
 .arrow {
   font-size: 12px;
   transition: transform 0.3s ease;
-  color: FCFCFC;
+  color: #45a049;
+  font-family: 'Space Mono', monospace;
 }
 
 .arrow.open {
@@ -306,6 +337,7 @@ header h1 {
   transition: background-color 0.2s ease;
   color: #333;
   font-size: 14px;
+  font-family: 'Space Mono', monospace;
 }
 
 .language-option:hover {
@@ -358,6 +390,7 @@ footer {
   flex-direction: column;
   align-items: center;
   transition: all 0.3s ease-in-out;
+  font-family: 'Space Mono', monospace;
 }
 
 #contact {
@@ -367,6 +400,7 @@ footer {
   align-items: center;  
   flex-direction: column;
   transition: all 0.3s ease-in-out;
+  font-family: 'Space Mono', monospace;
 }
 
 #description {
@@ -377,6 +411,7 @@ footer {
   text-justify: justify;
   align-items: center;
   font-size: xx-small;
+  font-family: 'Space Mono', monospace;
 }
 
 a {
@@ -411,14 +446,36 @@ a {
     padding: 15px;
   }
 
-  #language-switcher {
-    position: static;
-    align-self: flex-end;
+  #logo-container {
+    flex: none;
+    width: 100%;
+    justify-content: center;
+    margin-bottom: 10px;
   }
 
-  header h1 {
+  #title-container {
+    position: static;
+    transform: none;
+    width: 100%;
+  }
+
+  #title-container h1 {
     text-align: center;
     font-size: 24px;
+    white-space: normal;
+  }
+
+  #language-switcher {
+    flex: none;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  .language-menu {
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
   }
 
   #topFooter {
@@ -440,11 +497,6 @@ a {
 
   .elements_footer {
     border-bottom: 2px solid rgb(66, 65, 65);
-  }
-
-  .language-menu {
-    right: auto;
-    left: 0;
   }
 }
 </style>

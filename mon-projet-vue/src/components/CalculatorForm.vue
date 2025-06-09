@@ -283,6 +283,7 @@ export default {
   flex-direction: column;
   justify-content: space-between;
   border: 1px solid #ddd;
+  font-family: 'Space Mono', monospace;
 }
 
 /* Titre */
@@ -291,6 +292,8 @@ h1 {
   text-align: center;
   color: #4CAF50;
   margin-bottom: 20px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
 }
 
 /* Formulaire */
@@ -312,6 +315,7 @@ h1 {
   display: flex;
   align-items: center;
   gap: 10px;
+  font-family: 'Space Mono', monospace;
 }
 
 /* Zone de saisie */
@@ -328,11 +332,18 @@ h1 {
   width: 150px;
 }
 
+.zone_texte label {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
 .zone_saisie {
   padding: 8px;
   border: 1px solid #ccc;
   border-radius: 5px;
   transition: border-color 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+  font-family: 'Space Mono', monospace;
 }
 
 .zone_saisie:hover {
@@ -354,6 +365,7 @@ h1 {
   border: 1px solid #ddd;
   border-radius: 5px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-family: 'Space Mono', monospace;
 }
 
 #resultat p {
@@ -369,6 +381,7 @@ h1 {
   background-color: #fff0f0;
   border: 1px solid #ffcccc;
   border-radius: 5px;
+  font-family: 'Space Mono', monospace;
 }
 
 /* Email form */
@@ -384,6 +397,7 @@ h1 {
   border: 1px solid #ccc;
   border-radius: 5px;
   transition: all 0.3s ease;
+  font-family: 'Space Mono', monospace;
 }
 
 .email-form input.invalid {
@@ -399,6 +413,8 @@ h1 {
   border-radius: 5px;
   cursor: pointer;
   transition: all 0.3s ease;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
 }
 
 .email-form button:disabled {
@@ -415,6 +431,8 @@ h1 {
   border-radius: 5px;
   cursor: pointer;
   transition: all 0.3s ease;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
 }
 
 .email-button:hover {
@@ -427,6 +445,7 @@ h1 {
   padding: 10px;
   border-radius: 5px;
   font-weight: bold;
+  font-family: 'Space Mono', monospace;
 }
 
 .email-status.success {
@@ -452,6 +471,8 @@ button {
   font-size: 16px;
   cursor: pointer;
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
 }
 
 button:not(:disabled):hover {
@@ -473,6 +494,12 @@ button:disabled {
   margin-bottom: 20px;
 }
 
+#EW_version label {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
 /* Style du select avec transition */
 select {
   padding: 8px;
@@ -491,6 +518,7 @@ select {
   background-size: 5px 5px,
                   5px 5px;
   background-repeat: no-repeat;
+  font-family: 'Space Mono', monospace;
 }
 
 select:hover, select:focus {
@@ -502,6 +530,7 @@ select:hover, select:focus {
 select option {
   padding: 8px;
   transition: background-color 0.3s ease;
+  font-family: 'Space Mono', monospace;
 }
 
 select option:hover {
@@ -574,5 +603,10 @@ select option:hover {
   font-size: 16px;
   color: #333;
   cursor: pointer;
+}
+
+#choix span {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
 }
 </style>

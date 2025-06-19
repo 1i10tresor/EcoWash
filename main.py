@@ -342,13 +342,12 @@ def send_mail():
         today = datetime.now().strftime("%d/%m/%Y à %H:%M")
         body = f"""Bonjour,
 
-Voici les résultats de votre calcul EcoWash effectué le {today}.
+Voici les résultats de votre calcul Ecowash effectué le {today}.
 
 ID du calcul: {calc_id}
 
 Données saisies:
 - Modèle: {form_data.get('modele', 'N/A')}
-- Type de mesure: {form_data.get('choix', 'N/A')}
 - Densité: {form_data.get('densite', 'N/A')}
 - Réfraction: {form_data.get('refraction', 'N/A')}
 
@@ -356,15 +355,17 @@ Résultats - Additifs à ajouter:
 """
         
         for product, value in results.items():
-            body += f"- {value:.7f} de {product}\n"
+            body += f"- {value:.5f} de {product}\n"
 
         body += f"""
+
+Addition for 100 units (by volume) of solvent to be corrected.
 
 Cordialement,
 L'équipe Spring Coating Systems
 
 ---
-Ce message a été généré automatiquement par le système EcoWash.
+Ce message a été généré automatiquement par le système Ecowash.
 Pour toute question, contactez-nous à ecowash@spring-coating.com
 """
 
@@ -377,7 +378,7 @@ Pour toute question, contactez-nous à ecowash@spring-coating.com
         
         # Send email
         try:
-            subject = f"Résultat correction EcoWash du {today.split(' à ')[0]}"
+            subject = f"Résultat correction Ecowash du {today.split(' à ')[0]}"
             yag.send(to=recipient_email, subject=subject, contents=body)
             yag.close()
         except Exception as e:

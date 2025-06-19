@@ -2,7 +2,7 @@
   <div id="main_container">
     <header>
       <div id="logo-container">
-        <img src="/logoEcoWash.png" alt="EcoWash Logo" id="header-logo" />
+        <img src="/logoEcoWash.png" alt="Ecowash Logo" id="header-logo" />
       </div>
       <div id="title-container">
         <h1 class="desktop-title">{{ translations[currentLanguage].headerTitle }}</h1>
@@ -70,7 +70,7 @@ export default {
   name: 'App',
   components: { CalculatorForm },
   setup() {
-    const currentLanguage = ref('fr');
+    const currentLanguage = ref('en'); // Changed default to English
     const showLanguageMenu = ref(false);
     const languageSelector = ref(null);
     
@@ -82,7 +82,7 @@ export default {
 
     const currentFlag = computed(() => {
       const lang = languages.find(l => l.code === currentLanguage.value);
-      return lang ? lang.flag : '/france.png';
+      return lang ? lang.flag : '/etats-unis.png'; // Changed default flag to US
     });
 
     const otherLanguages = computed(() => {
@@ -93,7 +93,7 @@ export default {
       fr: {
         headerTitle: "Calculateur d'additifs EcoAdd",
         headerTitleMobile: "Calculateur d'additifs",
-        title: "EcoWash Balancing",
+        title: "Ecowash balancing calculator",
         modelChoice: "Choix du modèle",
         selectVersion: "Sélectionnez une version",
         density: "Densité",
@@ -118,16 +118,17 @@ export default {
         emailError: "Erreur lors de l'envoi de l'email",
         phone: "Tél",
         reportProblem: "Signaler un problème",
-        companyDescriptionShort: "Spring Coating Systems est formulateur et fabricant d'encres, vernis, colles, et peintures pour des applications industrielles et l'impression d'emballages. Nos produits sont souvent formulés sur mesure et adaptés à l'activité de nos clients."
+        companyDescriptionShort: "Spring Coating Systems est formulateur et fabricant d'encres, vernis, colles, et peintures pour des applications industrielles et l'impression d'emballages. Nos produits sont souvent formulés sur mesure et adaptés à l'activité de nos clients.",
+        additionNote: "Addition pour 100 unités (en volume) de solvant à corriger"
       },
       en: {
         headerTitle: "EcoAdd Additives Calculator",
         headerTitleMobile: "Additives Calculator",
-        title: "EcoWash Balancing",
-        modelChoice: "Model Selection",
+        title: "Ecowash balancing calculator",
+        modelChoice: "Choose Product",
         selectVersion: "Select a version",
         density: "Density",
-        refraction: "Refraction",
+        refraction: "Refractive Index",
         calculate: "Calculate",
         result: "Result",
         add: "Add",
@@ -148,16 +149,17 @@ export default {
         emailError: "Error sending email",
         phone: "Tel",
         reportProblem: "Report a problem",
-        companyDescriptionShort: "Spring Coating Systems is a formulator and manufacturer of inks, varnishes, adhesives, and paints for industrial applications and packaging printing. Our products are often custom-formulated and adapted to our customers' activities."
+        companyDescriptionShort: "Spring Coating Systems is a formulator and manufacturer of inks, varnishes, adhesives, and paints for industrial applications and packaging printing. Our products are often custom-formulated and adapted to our customers' activities.",
+        additionNote: "Addition for 100 units (by volume) of solvent to be corrected"
       },
       de: {
         headerTitle: "EcoAdd Additive Rechner",
         headerTitleMobile: "Additive Rechner",
-        title: "EcoWash Balancing",
-        modelChoice: "Modellauswahl",
+        title: "Ecowash balancing calculator",
+        modelChoice: "Produkt wählen",
         selectVersion: "Wählen Sie eine Version",
         density: "Dichte",
-        refraction: "Brechung",
+        refraction: "Brechungsindex",
         calculate: "Berechnen",
         result: "Ergebnis",
         add: "Hinzufügen",
@@ -178,7 +180,8 @@ export default {
         emailError: "Fehler beim Senden der E-Mail",
         phone: "Tel",
         reportProblem: "Problem melden",
-        companyDescriptionShort: "Spring Coating Systems ist Formulierer und Hersteller von Tinten, Lacken, Klebstoffen und Farben für industrielle Anwendungen und Verpackungsdruck. Unsere Produkte werden oft maßgeschneidert und an die Aktivitäten unserer Kunden angepasst."
+        companyDescriptionShort: "Spring Coating Systems ist Formulierer und Hersteller von Tinten, Lacken, Klebstoffen und Farben für industrielle Anwendungen und Verpackungsdruck. Unsere Produkte werden oft maßgeschneidert und an die Aktivitäten unserer Kunden angepasst.",
+        additionNote: "Zusatz für 100 Einheiten (nach Volumen) des zu korrigierenden Lösungsmittels"
       }
     });
 

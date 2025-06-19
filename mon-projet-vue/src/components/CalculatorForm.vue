@@ -13,19 +13,6 @@
           </select>
         </div>
 
-        <div id="choix">
-          <div id="IRS">
-            <input type="radio" id="IR" name="choix" value="IR" v-model="donnees.choix" class="custom-radio">
-            <label for="IR"></label>
-            <span>IR</span>
-          </div>
-          <div id="BRIXS">
-            <input type="radio" id="BRIX" name="choix" value="BRIX" v-model="donnees.choix" class="custom-radio">
-            <label for="BRIX"></label>
-            <span>BRIX</span>
-          </div>
-        </div>
-
         <div id="saisie">
           <div class="zone_texte">
             <label for="saisie_densite">{{ translations[currentLanguage].density }}</label><br>
@@ -33,8 +20,8 @@
           </div>
 
           <div class="zone_texte">
-            <label for="saisie_refraction">{{ donnees.choix === 'BRIX' ? 'BRIX' : 'I.R' }}</label><br>
-            <input type="number" class="zone_saisie" step="any" lang="en" id="saisie_refraction" v-model="donnees.refraction" name="saisie" :placeholder="donnees.choix === 'BRIX' ? 'BRIX' : translations[currentLanguage].refraction" @input="resetCalculation">
+            <label for="saisie_refraction">{{ translations[currentLanguage].refraction }}</label><br>
+            <input type="number" class="zone_saisie" step="any" lang="en" id="saisie_refraction" v-model="donnees.refraction" name="saisie" :placeholder="translations[currentLanguage].refraction" @input="resetCalculation">
           </div>
         </div>
 
@@ -65,8 +52,9 @@
           <div v-else-if="resultat_corrige && Object.keys(resultat_corrige).length >= 1">
             <p>{{ translations[currentLanguage].result }} :</p>
             <li v-for="(value, key) in resultat_corrige" :key="key">
-              {{ translations[currentLanguage].add }} {{ value.toFixed(7) }} {{ translations[currentLanguage].of }} {{ key }}
+              {{ translations[currentLanguage].add }} {{ value.toFixed(5) }} {{ translations[currentLanguage].of }} {{ key }}
             </li>
+            <p class="addition-note">{{ translations[currentLanguage].additionNote }}</p>
             <p> - - - - - - - -  </p>
             <p>{{ translations[currentLanguage].calculationId }} : {{ calculationId }}</p>
             <button type="button" @click="showEmailForm = true" class="email-button">{{ translations[currentLanguage].sendByEmail }}</button>
@@ -126,7 +114,6 @@ export default {
 
     const donnees = reactive({
       modele: '',
-      choix: '',
       densite: 0,
       refraction: 0
     });
@@ -149,8 +136,20 @@ export default {
     const resultat_corrige = computed(() => {
       if (!resultat.value?.result?.additives) return {};
       const adds = resultat.value.result.additives;
+      // Multiply by 100 and rename EcoAdd components
+      const renamedAdds = {};
+      Object.entries(adds).forEach(([key, value]) => {
+        let newKey = key;
+        if (key === 'EcoAdd 1') newKey = 'Eco Add H';
+        else if (key === 'EcoAdd 2') newKey = 'Eco Add A';
+        else if (key === 'EcoAdd 3') newKey = 'Eco Add S';
+        
+        renamedAdds[newKey] = value * 100; // Multiply by 100
+      });
+      
       return Object.fromEntries(
-        Object.entries(adds).filter(([, qty]) => qty !== 0));
+        Object.entries(renamedAdds).filter(([, qty]) => qty !== 0)
+      );
     });
 
     const isValidEmail = computed(() => {
@@ -160,7 +159,6 @@ export default {
 
     const isFormValid = computed(() => {
       return donnees.modele !== '' && 
-             donnees.choix !== '' && 
              donnees.densite !== 0 && 
              donnees.refraction !== 0;
     });
@@ -188,7 +186,6 @@ export default {
 
     // Watch for changes in form values
     watch(() => donnees.modele, resetCalculation);
-    watch(() => donnees.choix, resetCalculation);
 
     const recup_liste_recettes = async () => {
       try {
@@ -212,15 +209,19 @@ export default {
       try {
         erreur.value = null;
         let refractionValue = donnees.refraction;
-        if (donnees.choix === 'BRIX') {
-          refractionValue = (refractionValue / 476.21) + 1.3215;
+        let choix = 'IR'; // Default choice
+        
+        // Automatic detection based on value
+        if (donnees.refraction > 2) {
+          choix = 'BRIX';
+          refractionValue = (donnees.refraction / 476.21) + 1.3215;
         }
 
         const response = await axios.post('/api/calculate', {
           densite: donnees.densite,
           refraction: refractionValue,
           fichier_excel: donnees.modele,
-          choix: donnees.choix
+          choix: choix
         });
         
         if (response.data.success) {
@@ -254,7 +255,6 @@ export default {
           donnees: {
             densite: donnees.densite,
             refraction: donnees.refraction,
-            choix: donnees.choix,
             modele: donnees.modele
           },
           calculationId: calculationId.value
@@ -358,20 +358,6 @@ h1 {
   width: 100%;
 }
 
-/* Section des choix */
-#choix {
-  display: flex;
-  justify-content: space-around;
-  margin-top: 20px;
-}
-
-#IRS, #BRIXS {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-family: 'Space Mono', monospace;
-}
-
 /* Zone de saisie */
 #saisie {
   display: flex;
@@ -426,6 +412,14 @@ h1 {
 #resultat p {
   font-weight: bold;
   color: #333;
+}
+
+.addition-note {
+  font-style: italic;
+  color: #666;
+  font-size: 12px;
+  margin-top: 10px;
+  font-weight: normal !important;
 }
 
 /* Messages d'erreur améliorés */
@@ -742,79 +736,6 @@ select option:hover {
   background-color: #f0f0f0;
 }
 
-/* Boutons radio personnalisés */
-.custom-radio {
-  display: none;
-}
-
-.custom-radio + label {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  border: 2px solid #000000;
-  border-radius: 3px;
-  background-color: white;
-  cursor: pointer;
-  position: relative;
-  margin-right: 10px;
-  transition: all 0.3s ease;
-}
-
-.custom-radio:checked + label {
-  background-color: #4CAF50;
-  border-color: #000000;
-  transform: scale(1.1);
-}
-
-.custom-radio:checked + label::after {
-  content: '';
-  position: absolute;
-  width: 10px;
-  height: 2px;
-  background-color: black;
-  transform: rotate(45deg);
-  top: 50%;
-  left: 50%;
-  transform-origin: center;
-  transform: translate(-50%, -50%) rotate(45deg);
-  transition: all 0.3s ease;
-}
-
-.custom-radio:checked + label::before {
-  content: '';
-  position: absolute;
-  width: 10px;
-  height: 2px;
-  background-color: black;
-  transform: rotate(-45deg);
-  top: 50%;
-  left: 50%;
-  transform-origin: center;
-  transform: translate(-50%, -50%) rotate(-45deg);
-  transition: all 0.3s ease;
-}
-
-/* Alignement des labels de texte */
-#choix div {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-#choix label {
-  margin: 0;
-  font-size: 16px;
-  color: #333;
-  cursor: pointer;
-}
-
-#choix span {
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-}
-
 /* Responsive design pour mobile */
 @media (max-width: 768px) {
   #calculator {
@@ -851,10 +772,6 @@ select option:hover {
 
   h1 {
     font-size: 18px;
-  }
-
-  #choix {
-    gap: 20px;
   }
 
   select {

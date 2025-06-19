@@ -108,7 +108,8 @@ import axios from 'axios';
 
 export default {
   name: 'CalculatorForm',
-  setup() {
+  emits: ['results-changed'], // Declare the emit
+  setup(props, { emit }) {
     const currentLanguage = inject('currentLanguage');
     const translations = inject('translations');
 
@@ -162,6 +163,15 @@ export default {
              donnees.densite !== 0 && 
              donnees.refraction !== 0;
     });
+
+    // Watch for results changes and emit to parent
+    watch(resultat, (newValue) => {
+      const hasResults = !!(newValue && (
+        newValue.message || 
+        (newValue.result?.additives && Object.keys(newValue.result.additives).length > 0)
+      ));
+      emit('results-changed', hasResults);
+    }, { immediate: true });
 
     // Clear error message
     const clearError = () => {

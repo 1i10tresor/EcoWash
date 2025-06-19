@@ -2,7 +2,7 @@
   <div id="main_container">
     <header>
       <div id="logo-container">
-        <img src="/logoEcoWash.png" alt="Ecowash Logo" id="header-logo" />
+        <img src="/logoEcoWash.png" alt="Ecowash Logo" id="header-logo" :class="{ 'logo-large': !hasResults }" />
       </div>
       <div id="language-switcher">
         <div class="language-selector" @click="toggleLanguageMenu" ref="languageSelector">
@@ -25,7 +25,7 @@
     </header>
 
     <div id="calculator">
-      <CalculatorForm />
+      <CalculatorForm @results-changed="handleResultsChanged" />
     </div>
 
     <footer>
@@ -69,6 +69,7 @@ export default {
     const currentLanguage = ref('en'); // Changed default to English
     const showLanguageMenu = ref(false);
     const languageSelector = ref(null);
+    const hasResults = ref(false); // Track if calculator has results
     
     const languages = [
       { code: 'fr', name: 'Français', flag: '/france.png' },
@@ -196,6 +197,11 @@ export default {
       }
     };
 
+    // Handle results change from calculator
+    const handleResultsChanged = (hasResultsValue) => {
+      hasResults.value = hasResultsValue;
+    };
+
     onMounted(() => {
       document.addEventListener('click', handleClickOutside);
     });
@@ -217,7 +223,9 @@ export default {
       toggleLanguageMenu,
       currentFlag,
       otherLanguages,
-      languageSelector
+      languageSelector,
+      hasResults,
+      handleResultsChanged
     };
   }
 };
@@ -247,6 +255,7 @@ header {
   align-items: center;
   position: relative;
   min-height: 120px; /* Hauteur pour accommoder le gros logo */
+  transition: min-height 0.5s ease; /* Transition fluide pour la hauteur */
 }
 
 /* Logo container - centré et agrandi */
@@ -258,16 +267,27 @@ header {
 }
 
 #header-logo {
-  max-height: 120px; /* Logo beaucoup plus gros */
+  max-height: 120px; /* Taille normale */
   max-width: 400px;
   height: auto;
   width: auto;
   object-fit: contain;
-  transition: transform 0.3s ease;
+  transition: all 0.5s ease; /* Transition fluide pour toutes les propriétés */
+}
+
+/* Logo agrandi quand pas de résultats */
+#header-logo.logo-large {
+  max-height: 240px; /* 2 fois plus gros */
+  max-width: 800px; /* 2 fois plus large */
 }
 
 #header-logo:hover {
   transform: scale(1.05);
+}
+
+/* Ajustement de la hauteur du header quand le logo est grand */
+header:has(.logo-large) {
+  min-height: 200px; /* Plus de hauteur pour accommoder le gros logo */
 }
 
 /* Language switcher - positionné absolument en haut à droite */
@@ -530,9 +550,18 @@ a {
     min-height: 100px;
   }
 
+  header:has(.logo-large) {
+    min-height: 160px; /* Ajustement pour mobile */
+  }
+
   #header-logo {
     max-height: 100px;
     max-width: 300px;
+  }
+
+  #header-logo.logo-large {
+    max-height: 180px; /* Proportionnel pour mobile */
+    max-width: 540px;
   }
 
   #language-switcher {
@@ -612,9 +641,18 @@ a {
     min-height: 80px;
   }
 
+  header:has(.logo-large) {
+    min-height: 140px; /* Ajustement pour très petits écrans */
+  }
+
   #header-logo {
     max-height: 80px;
     max-width: 250px;
+  }
+
+  #header-logo.logo-large {
+    max-height: 140px; /* Proportionnel pour très petits écrans */
+    max-width: 420px;
   }
 
   #language-switcher {

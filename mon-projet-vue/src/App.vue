@@ -4,10 +4,6 @@
       <div id="logo-container">
         <img src="/logoEcoWash.png" alt="Ecowash Logo" id="header-logo" />
       </div>
-      <div id="title-container">
-        <h1 class="desktop-title">{{ translations[currentLanguage].headerTitle }}</h1>
-        <h1 class="mobile-title">{{ translations[currentLanguage].headerTitleMobile }}</h1>
-      </div>
       <div id="language-switcher">
         <div class="language-selector" @click="toggleLanguageMenu" ref="languageSelector">
           <img :src="currentFlag" :alt="currentLanguage" class="current-flag">
@@ -242,65 +238,44 @@ export default {
   background-repeat: no-repeat;
 }
 
-/* Header */
+/* Header redesigné - Logo centré et sélecteur de langue à droite */
 header {
-  background-color: #FCFCFC;
-  color: #45a049;
-  padding: 20px;
+  background-color: transparent; /* Suppression du bandeau */
+  padding: 30px 20px;
   display: flex;
-  justify-content: space-between;
+  justify-content: center; /* Centre le logo */
   align-items: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   position: relative;
-  backdrop-filter: blur(10px);
+  min-height: 120px; /* Hauteur pour accommoder le gros logo */
 }
 
-/* Logo container - occupe 75% de l'espace */
+/* Logo container - centré et agrandi */
 #logo-container {
-  flex: 0 0 75%;
   display: flex;
+  justify-content: center;
   align-items: center;
-  justify-content: flex-start;
+  flex: 1;
 }
 
 #header-logo {
-  max-height: 60px;
-  max-width: 100%;
+  max-height: 120px; /* Logo beaucoup plus gros */
+  max-width: 400px;
   height: auto;
+  width: auto;
   object-fit: contain;
+  transition: transform 0.3s ease;
 }
 
-/* Conteneur du titre - centré absolument */
-#title-container {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 1;
+#header-logo:hover {
+  transform: scale(1.05);
 }
 
-#title-container h1 {
-  margin: 0;
-  font-size: 28px;
-  text-align: center;
-  white-space: nowrap;
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-}
-
-/* Titres desktop et mobile */
-.desktop-title {
-  display: block;
-}
-
-.mobile-title {
-  display: none;
-}
-
-/* Language switcher */
+/* Language switcher - positionné absolument en haut à droite */
 #language-switcher {
-  flex: 0 0 auto;
-  z-index: 2;
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 10;
 }
 
 .language-selector {
@@ -308,32 +283,36 @@ header {
   display: flex;
   align-items: center;
   gap: 8px;
-  background-color: rgba(255, 255, 255, 0.2);
-  padding: 8px 8px;
-  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 10px 12px;
+  border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 2px solid rgba(76, 175, 80, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .language-selector:hover {
-  background-color: rgba(255, 255, 255, 0.3);
+  background-color: rgba(255, 255, 255, 1);
+  border-color: #4CAF50;
   transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
 
 .current-flag {
-  width: 25px;
-  height: 25px;
+  width: 28px;
+  height: 28px;
   object-fit: cover;
   border-radius: 50%;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 
 .arrow {
-  font-size: 12px;
+  font-size: 14px;
   transition: transform 0.3s ease;
-  color: #45a049;
+  color: #4CAF50;
   font-family: 'Space Mono', monospace;
+  font-weight: bold;
 }
 
 .arrow.open {
@@ -344,29 +323,31 @@ header {
   position: absolute;
   top: 100%;
   right: 0;
-  margin-top: 8px;
+  margin-top: 10px;
   background-color: #FCFCFC;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
   overflow: hidden;
   z-index: 1000;
-  min-width: 140px;
+  min-width: 160px;
+  border: 1px solid rgba(76, 175, 80, 0.2);
 }
 
 .language-option {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
+  gap: 12px;
+  padding: 14px 18px;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: all 0.2s ease;
   color: #333;
   font-size: 14px;
   font-family: 'Space Mono', monospace;
 }
 
 .language-option:hover {
-  background-color: #f5f5f5;
+  background-color: #f0f8f0;
+  color: #4CAF50;
 }
 
 .flag-option {
@@ -374,7 +355,7 @@ header {
   height: 25px;
   object-fit: cover;
   border-radius: 50%;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 /* Contenu principal */
@@ -389,7 +370,7 @@ header {
 }
 
 footer {
-  height: 100px; /* Hauteur augmentée de 80px à 100px */
+  height: 100px;
   color: rgb(231, 228, 222);
   box-shadow: 0 -5px 10px -5px rgba(0, 0, 0, 0.3);
 }
@@ -400,7 +381,7 @@ footer {
   background-color: rgba(37, 34, 34, 0.95);
   display: flex;
   backdrop-filter: blur(10px);
-  align-items: center; /* Centrage vertical pour aligner les titres */
+  align-items: center;
 }
 
 .elements_footer {
@@ -408,7 +389,7 @@ footer {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 15px; /* Padding légèrement augmenté */
+  padding: 15px;
   text-align: center;
   transition: all 0.3s ease-in-out;
   font-family: 'Space Mono', monospace;
@@ -419,13 +400,13 @@ footer {
 }
 
 .elements_footer h2 {
-  margin: 0 0 8px 0; /* Marge légèrement augmentée */
-  font-size: 15px; /* Taille de police légèrement augmentée */
+  margin: 0 0 8px 0;
+  font-size: 15px;
 }
 
 .elements_footer p {
-  margin: 1px 0; /* Marge réduite pour l'adresse */
-  font-size: 13px; /* Taille de police légèrement augmentée */
+  margin: 1px 0;
+  font-size: 13px;
 }
 
 #logo {
@@ -434,7 +415,7 @@ footer {
 }
 
 #logo img {
-  max-height: 60px; /* Hauteur du logo légèrement augmentée */
+  max-height: 60px;
   width: auto;
 }
 
@@ -444,7 +425,7 @@ footer {
 }
 
 #adresse p {
-  margin: 1px 0; /* Espacement réduit spécifiquement pour l'adresse */
+  margin: 1px 0;
 }
 
 #contact {
@@ -455,17 +436,17 @@ footer {
 #description {
   flex: 2;
   min-width: 250px;
-  font-size: 10px; /* Taille de police réduite pour voir le logo LinkedIn */
+  font-size: 10px;
 }
 
 a {
   text-decoration: none;
   color: rgb(241, 243, 220);
-  font-size: 13px; /* Taille de police légèrement augmentée */
+  font-size: 13px;
 }
 
 #linkedin {
-  width: 70px; /* Taille légèrement augmentée */
+  width: 70px;
   background-color: transparent !important;
 }
 
@@ -473,9 +454,9 @@ a {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 40px; /* Hauteur légèrement augmentée */
+  height: 40px;
   border-bottom: 1px solid rgb(241, 243, 220);
-  margin-bottom: 8px; /* Marge légèrement augmentée */
+  margin-bottom: 8px;
   transition: all 0.3s ease-in-out;
 }
 
@@ -487,7 +468,7 @@ a {
 /* Media queries pour une meilleure responsivité */
 @media (max-width: 1200px) {
   footer {
-    height: 110px; /* Hauteur légèrement augmentée pour écrans moyens */
+    height: 110px;
   }
   
   .elements_footer h2 {
@@ -545,58 +526,41 @@ a {
 
 @media (max-width: 768px) {
   header {
-    padding: 15px;
-    /* Garde la disposition flex horizontale mais avec positionnement relatif */
-    position: relative;
-  }
-
-  /* Le logo est maintenant centré absolument par rapport à toute la largeur */
-  #logo-container {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 1;
+    padding: 20px 15px;
+    min-height: 100px;
   }
 
   #header-logo {
-    max-height: 55px; /* Logo un peu plus gros */
+    max-height: 100px;
+    max-width: 300px;
   }
 
-  /* Le titre disparaît complètement sur mobile */
-  #title-container {
-    display: none;
-  }
-
-  /* Le sélecteur de langue reste à droite */
   #language-switcher {
-    position: relative;
-    z-index: 2;
-    margin-left: auto;
+    top: 15px;
+    right: 15px;
   }
 
   .language-selector {
-    padding: 6px;
+    padding: 8px 10px;
   }
 
   .current-flag {
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
   }
 
   .language-menu {
     right: 0;
     left: auto;
     transform: none;
-    min-width: 120px;
+    min-width: 140px;
   }
 
   .flag-option {
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
   }
 
-  /* Centrage du calculateur sur mobile */
   #calculator {
     padding: 20px 10px;
     justify-content: center;
@@ -644,25 +608,32 @@ a {
 
 @media (max-width: 480px) {
   header {
-    padding: 10px;
+    padding: 15px 10px;
+    min-height: 80px;
   }
 
   #header-logo {
-    max-height: 50px; /* Logo un peu plus gros même sur très petits écrans */
+    max-height: 80px;
+    max-width: 250px;
+  }
+
+  #language-switcher {
+    top: 10px;
+    right: 10px;
   }
 
   .language-selector {
-    padding: 5px;
+    padding: 6px 8px;
   }
 
   .current-flag {
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
   }
 
   .flag-option {
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
   }
 
   .elements_footer {
@@ -689,7 +660,6 @@ a {
     height: 40px;
   }
 
-  /* Centrage renforcé pour très petits écrans */
   #calculator {
     padding: 15px 5px;
     width: 100%;

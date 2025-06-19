@@ -15,12 +15,12 @@
 
         <div id="saisie">
           <div class="zone_texte">
-            <label for="saisie_densite">{{ translations[currentLanguage].density }}</label><br>
+            <label for="saisie_densite">{{ translations[currentLanguage].density }}</label>
             <input type="number" class="zone_saisie" step="any" lang="en" id="saisie_densite" v-model="donnees.densite" name="saisie" :placeholder="translations[currentLanguage].density" @input="resetCalculation">
           </div>
 
           <div class="zone_texte">
-            <label for="saisie_refraction">{{ translations[currentLanguage].refraction }}</label><br>
+            <label for="saisie_refraction">{{ translations[currentLanguage].refraction }}</label>
             <input type="number" class="zone_saisie" step="any" lang="en" id="saisie_refraction" v-model="donnees.refraction" name="saisie" :placeholder="translations[currentLanguage].refraction" @input="resetCalculation">
           </div>
         </div>
@@ -358,25 +358,31 @@ h1 {
   width: 100%;
 }
 
-/* Zone de saisie */
+/* Zone de saisie - Alignement parfait */
 #saisie {
   display: flex;
   justify-content: space-between;
   gap: 20px;
   margin-top: 20px;
+  align-items: flex-end; /* Aligne les inputs en bas pour compenser les différences de hauteur des labels */
 }
 
 .zone_texte {
   display: flex;
   flex-direction: column;
   width: 150px;
+  min-height: 60px; /* Hauteur minimale fixe pour uniformiser */
 }
 
 .zone_texte label {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
-  margin-bottom: 5px;
-  text-align: left; /* Alignement à gauche */
+  margin-bottom: 8px; /* Marge fixe pour tous les labels */
+  text-align: left;
+  height: 20px; /* Hauteur fixe pour les labels */
+  display: flex;
+  align-items: center; /* Centre le texte verticalement dans la hauteur fixe */
+  line-height: 1.2;
 }
 
 .zone_saisie {
@@ -385,6 +391,8 @@ h1 {
   border-radius: 5px;
   transition: border-color 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
   font-family: 'Space Mono', monospace;
+  height: 40px; /* Hauteur fixe pour tous les inputs */
+  box-sizing: border-box;
 }
 
 .zone_saisie:hover {
@@ -752,10 +760,12 @@ select option:hover {
   #saisie {
     flex-direction: column;
     gap: 15px;
+    align-items: stretch; /* Étire les éléments sur toute la largeur en mode mobile */
   }
 
   .zone_texte {
     width: 100%;
+    min-height: auto; /* Supprime la hauteur minimale en mobile */
   }
 
   select {

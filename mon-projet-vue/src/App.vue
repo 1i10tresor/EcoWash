@@ -542,50 +542,55 @@ a {
 
 @media (max-width: 768px) {
   header {
-    flex-direction: column;
-    gap: 15px;
     padding: 15px;
+    /* Garde la disposition flex horizontale mais avec positionnement relatif */
+    position: relative;
   }
 
+  /* Le logo est maintenant centré absolument par rapport à toute la largeur */
   #logo-container {
-    flex: none;
-    width: 100%;
-    justify-content: center;
-    margin-bottom: 10px;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1;
   }
 
+  #header-logo {
+    max-height: 55px; /* Logo un peu plus gros */
+  }
+
+  /* Le titre disparaît complètement sur mobile */
   #title-container {
-    position: static;
-    transform: none;
-    width: 100%;
-  }
-
-  #title-container h1 {
-    text-align: center;
-    font-size: 24px;
-    white-space: normal;
-  }
-
-  /* Affichage des titres sur mobile */
-  .desktop-title {
     display: none;
   }
 
-  .mobile-title {
-    display: block;
+  /* Le sélecteur de langue reste à droite */
+  #language-switcher {
+    position: relative;
+    z-index: 2;
+    margin-left: auto;
   }
 
-  #language-switcher {
-    flex: none;
-    width: 100%;
-    display: flex;
-    justify-content: center;
+  .language-selector {
+    padding: 6px;
+  }
+
+  .current-flag {
+    width: 20px;
+    height: 20px;
   }
 
   .language-menu {
-    right: auto;
-    left: 50%;
-    transform: translateX(-50%);
+    right: 0;
+    left: auto;
+    transform: none;
+    min-width: 120px;
+  }
+
+  .flag-option {
+    width: 20px;
+    height: 20px;
   }
 
   /* Centrage du calculateur sur mobile */
@@ -635,6 +640,28 @@ a {
 }
 
 @media (max-width: 480px) {
+  header {
+    padding: 10px;
+  }
+
+  #header-logo {
+    max-height: 50px; /* Logo un peu plus gros même sur très petits écrans */
+  }
+
+  .language-selector {
+    padding: 5px;
+  }
+
+  .current-flag {
+    width: 18px;
+    height: 18px;
+  }
+
+  .flag-option {
+    width: 18px;
+    height: 18px;
+  }
+
   .elements_footer {
     padding: 12px 10px;
   }

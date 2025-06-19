@@ -21,7 +21,6 @@ def init_db():
             id TEXT PRIMARY KEY,
             model TEXT,
             measurement_type TEXT,
-            lot_number INTEGER,
             density REAL,
             refraction REAL,
             result TEXT,
@@ -268,14 +267,13 @@ def calculate():
         c = conn.cursor()
         c.execute('''
             INSERT INTO calculations (
-                id, model, measurement_type, lot_number, density, 
+                id, model, measurement_type, density, 
                 refraction, result, calculation_date
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
         ''', (
             calculation_id,
             data['fichier_excel'],
             data.get('choix', ''),
-            data.get('nb_lots', 0),
             densite,
             indice_refraction,
             json.dumps(result),

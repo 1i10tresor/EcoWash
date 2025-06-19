@@ -128,8 +128,7 @@ export default {
       modele: '',
       choix: '',
       densite: 0,
-      refraction: 0,
-      nb_lots: 1 // Ajout du champ nb_lots avec valeur par défaut
+      refraction: 0
     });
 
     const resultat = ref(null);
@@ -193,7 +192,7 @@ export default {
 
     const recup_liste_recettes = async () => {
       try {
-        const response = await axios.get('http://192.168.1.8:5000/recette');
+        const response = await axios.get('/api/recette');
         liste_recettes.value = response.data;
         erreur.value = null;
       } catch (err) {
@@ -217,12 +216,11 @@ export default {
           refractionValue = (refractionValue / 476.21) + 1.3215;
         }
 
-        const response = await axios.post('http://192.168.1.8:5000/calculate', {
+        const response = await axios.post('/api/calculate', {
           densite: donnees.densite,
           refraction: refractionValue,
           fichier_excel: donnees.modele,
-          choix: donnees.choix,
-          nb_lots: donnees.nb_lots // Ajout du champ nb_lots
+          choix: donnees.choix
         });
         
         if (response.data.success) {
@@ -250,15 +248,14 @@ export default {
         isEmailSending.value = true;
         emailStatus.value = null;
         
-        const response = await axios.post('http://192.168.1.8:5000/send_mail', {
+        const response = await axios.post('/api/send_mail', {
           email: email.value,
           resultats: resultat_corrige.value,
           donnees: {
             densite: donnees.densite,
             refraction: donnees.refraction,
             choix: donnees.choix,
-            modele: donnees.modele,
-            nb_lots: donnees.nb_lots // Ajout du champ nb_lots dans l'envoi email
+            modele: donnees.modele
           },
           calculationId: calculationId.value
         });

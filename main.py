@@ -195,38 +195,42 @@ def etape_2(x, y, z, sI, eco_adds):
             raise Exception("Division par zéro détectée dans le calcul des ratios")
         
         # Calculate initial ratios
-        a = sI["compo1"]["concL"] / sI["compo2"]["concL"]
-        b = sI["compo3"]["concL"] / sI["compo2"]["concL"]
-        c = sI["compo3"]["concL"] / sI["compo1"]["concL"]
+        ratio_compo1_compo2 = sI["compo1"]["concL"] / sI["compo2"]["concL"]
+        ratio_compo3_compo2 = sI["compo3"]["concL"] / sI["compo2"]["concL"]
+        ratio_compo3_compo1 = sI["compo3"]["concL"] / sI["compo1"]["concL"]
 
         # Calculate current ratios
-        a_ = x/y
-        b_ = z/y
-        c_ = z/x
+        ratio_actuel_compo1_compo2 = x/y
+        ratio_actuel_compo3_compo2 = z/y
+        ratio_actuel_compo3_compo1 = z/x
 
-        print(f"Ratios initiaux - a: {a:.5f}, b: {b:.5f}, c: {c:.5f}")
-        print(f"Ratios actuels - a': {a_:.5f}, b': {b_:.5f}, c': {c_:.5f}")
+        print(f"Ratios initiaux - compo1/compo2: {ratio_compo1_compo2:.5f}, compo3/compo2: {ratio_compo3_compo2:.5f}, compo3/compo1: {ratio_compo3_compo1:.5f}")
+        print(f"Ratios actuels - compo1/compo2: {ratio_actuel_compo1_compo2:.5f}, compo3/compo2: {ratio_actuel_compo3_compo2:.5f}, compo3/compo1: {ratio_actuel_compo3_compo1:.5f}")
+
+        # Store ratios in tuples for passing to next step
+        ratios_initiaux = (ratio_compo1_compo2, ratio_compo3_compo2, ratio_compo3_compo1)
+        ratios_actuels = (ratio_actuel_compo1_compo2, ratio_actuel_compo3_compo2, ratio_actuel_compo3_compo1)
 
         # Determine excess component
-        if a_ > a and c_ < c:
+        if ratio_actuel_compo1_compo2 > ratio_compo1_compo2 and ratio_actuel_compo3_compo1 < ratio_compo3_compo1:
             print("compo1 est en excès")
-            return etape_3(x, y, z, sI, "1", (a, b, c), (a_, b_, c_), eco_adds)
-        elif a_ < a and b_ < b:
+            return etape_3(x, y, z, sI, "1", ratios_initiaux, ratios_actuels, eco_adds)
+        elif ratio_actuel_compo1_compo2 < ratio_compo1_compo2 and ratio_actuel_compo3_compo2 < ratio_compo3_compo2:
             print("compo2 est en excès")
-            return etape_3(x, y, z, sI, "2", (a, b, c), (a_, b_, c_), eco_adds)
-        elif b_ > b and c_ > c:
+            return etape_3(x, y, z, sI, "2", ratios_initiaux, ratios_actuels, eco_adds)
+        elif ratio_actuel_compo3_compo2 > ratio_compo3_compo2 and ratio_actuel_compo3_compo1 > ratio_compo3_compo1:
             print("compo3 est en excès")
-            return etape_3(x, y, z, sI, "3", (a, b, c), (a_, b_, c_), eco_adds)
+            return etape_3(x, y, z, sI, "3", ratios_initiaux, ratios_actuels, eco_adds)
         else:
             raise Exception("Impossible de déterminer le composant en excès")
 
     except Exception as e:
         raise Exception(f"Erreur lors de l'étape 2: {str(e)}")
 
-def etape_3(x, y, z, sI, ex, ABC, ABC_, eco_adds):
+def etape_3(x, y, z, sI, ex, ratios_initiaux, ratios_actuels, eco_adds):
     """
     Step 3: Calculate required additive quantities to rebalance the solvent.
-    Updated to use compo1, compo2, compo3 naming.
+    Updated to use compo1, compo2, compo3 naming and explicit ratio names.
     Uses EcoAdds data from Excel file for additive concentrations.
     """
     print("Etape 3: Calcul des quantités d'additifs")
@@ -253,10 +257,13 @@ def etape_3(x, y, z, sI, ex, ABC, ABC_, eco_adds):
         
         print(f"Concentrations EcoAdd trouvées - H: {eco_add_1_conc}, A: {eco_add_2_conc}, S: {eco_add_3_conc}")
         
+        # Extract individual ratios for clarity
+        ratio_compo1_compo2, ratio_compo3_compo2, ratio_compo3_compo1 = ratios_initiaux
+        
         if ex == "1":  # compo1 en excès
             print("Calcul pour compo1 en excès")
-            compo2_cible = x / ABC[0]
-            compo3_cible = ABC[2] * x
+            compo2_cible = x / ratio_compo1_compo2
+            compo3_cible = ratio_compo3_compo1 * x
             delta_compo2 = compo2_cible - y
             delta_compo3 = compo3_cible - z
             
@@ -267,8 +274,8 @@ def etape_3(x, y, z, sI, ex, ABC, ABC_, eco_adds):
             
         elif ex == "2":  # compo2 en excès
             print("Calcul pour compo2 en excès")
-            compo1_cible = ABC[0] * y
-            compo3_cible = ABC[1] * y
+            compo1_cible = ratio_compo1_compo2 * y
+            compo3_cible = ratio_compo3_compo2 * y
             delta_compo1 = compo1_cible - x
             delta_compo3 = compo3_cible - z
             
@@ -279,8 +286,8 @@ def etape_3(x, y, z, sI, ex, ABC, ABC_, eco_adds):
             
         elif ex == "3":  # compo3 en excès
             print("Calcul pour compo3 en excès")
-            compo1_cible = z / ABC[2]
-            compo2_cible = z / ABC[1]
+            compo1_cible = z / ratio_compo3_compo1
+            compo2_cible = z / ratio_compo3_compo2
             delta_compo1 = compo1_cible - x
             delta_compo2 = compo2_cible - y
             

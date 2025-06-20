@@ -259,10 +259,6 @@ def calculate():
         # Get initial solvent data and EcoAdds data
         initial_solvent = solvant_initial(df)
         eco_adds_data = EcoAdds(df)
-        
-        print(f"Solvant initial: {initial_solvent}")
-        print(f"EcoAdds data: {eco_adds_data}")
-        
         # Calculate total theoretical values
         total_density, total_ir = calculate_total_values(initial_solvent)
         

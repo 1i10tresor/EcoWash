@@ -195,9 +195,9 @@ def etape_3(x, y, z, sI, ex, ABC, ABC_, eco_adds):
         additives = {}
         
         # Get EcoAdd concentrations from Excel data
-        eco_add_1_conc = eco_adds.get('EcoAdd 1', {}).get('ecoAddH')
-        eco_add_2_conc = eco_adds.get('EcoAdd 2', {}).get('ecoAddA')
-        eco_add_3_conc = eco_adds.get('EcoAdd 3', {}).get('ecoAddS')
+        eco_add_1_conc = eco_adds.get('EcoAdd H', {}).get('ecoAddH')
+        eco_add_2_conc = eco_adds.get('EcoAdd A', {}).get('ecoAddA')
+        eco_add_3_conc = eco_adds.get('EcoAdd S', {}).get('ecoAddS')
         
         if ex == "1":  # compo1 en excès
             print("Calcul pour compo1 en excès")

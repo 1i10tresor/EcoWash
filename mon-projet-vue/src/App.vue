@@ -384,10 +384,10 @@ header:has(.logo-large) {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 0px; /* Suppression complète du padding pour rapprocher au maximum */
+  padding: 10px; /* Remis à 10px comme demandé */
   width: 100%;
   box-sizing: border-box;
-  margin-top: -20px; /* Marge négative pour rapprocher encore plus */
+  margin-top: -5px; /* Marge négative de -5px comme demandé */
 }
 
 footer {
@@ -547,12 +547,12 @@ a {
 
 @media (max-width: 768px) {
   header {
-    padding: 15px; /* Remis aux valeurs précédentes */
-    min-height: 75px; /* Remis aux valeurs précédentes */
+    padding: 15px;
+    min-height: 75px;
   }
 
   header:has(.logo-large) {
-    min-height: 120px; /* Remis aux valeurs précédentes */
+    min-height: 120px;
   }
 
   #header-logo {
@@ -561,8 +561,8 @@ a {
   }
 
   #header-logo.logo-large {
-    max-height: 150px; /* 1.5x pour mobile (100 * 1.5) */
-    max-width: 450px; /* 1.5x pour mobile (300 * 1.5) */
+    max-height: 150px;
+    max-width: 450px;
   }
 
   #language-switcher {
@@ -592,10 +592,10 @@ a {
   }
 
   #calculator {
-    padding: 0px; /* Suppression complète du padding */
+    padding: 20px 10px; /* Valeurs originales pour mobile */
     justify-content: center;
     align-items: center;
-    margin-top: -15px; /* Marge négative pour rapprocher */
+    margin-top: 0; /* Pas de marge négative sur mobile */
   }
 
   footer {
@@ -639,12 +639,12 @@ a {
 
 @media (max-width: 480px) {
   header {
-    padding: 11px 10px; /* Remis aux valeurs précédentes */
-    min-height: 60px; /* Remis aux valeurs précédentes */
+    padding: 11px 10px;
+    min-height: 60px;
   }
 
   header:has(.logo-large) {
-    min-height: 105px; /* Remis aux valeurs précédentes */
+    min-height: 105px;
   }
 
   #header-logo {
@@ -653,8 +653,8 @@ a {
   }
 
   #header-logo.logo-large {
-    max-height: 120px; /* 1.5x pour très petits écrans (80 * 1.5) */
-    max-width: 375px; /* 1.5x pour très petits écrans (250 * 1.5) */
+    max-height: 120px;
+    max-width: 375px;
   }
 
   #language-switcher {
@@ -701,12 +701,12 @@ a {
   }
 
   #calculator {
-    padding: 0px; /* Suppression complète du padding */
+    padding: 15px 5px; /* Valeurs originales pour très petits écrans */
     width: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-top: -10px; /* Marge négative pour rapprocher */
+    margin-top: 0; /* Pas de marge négative sur mobile */
   }
 }
 </style>

@@ -41,11 +41,22 @@ def init_db():
 init_db()
 
 def dataFrame(fichier_excel):
-    """Load Excel file and return DataFrame"""
+    """Load Excel file and return DataFrame with error handling for locked files"""
     base_dir = os.path.dirname(__file__)
     recette = os.path.join(base_dir, 'recette', fichier_excel)
-    df = pd.read_excel(recette)
-    return df
+    
+    # Vérifier que le fichier existe
+    if not os.path.exists(recette):
+        raise FileNotFoundError(f"Le fichier {fichier_excel} n'existe pas dans le dossier recette")
+    
+    try:
+        # Essayer de lire le fichier Excel
+        df = pd.read_excel(recette)
+        return df
+    except PermissionError as e:
+        raise PermissionError(f"Le fichier {fichier_excel} est ouvert dans Excel. Veuillez le fermer et réessayer.")
+    except Exception as e:
+        raise Exception(f"Erreur lors de la lecture du fichier {fichier_excel}: {str(e)}")
 
 def solvant_initial(df):
     """Extract initial solvent composition from DataFrame using dynamic component names"""
@@ -378,6 +389,10 @@ def calculate():
             "calculationId": calculation_id
         })
         
+    except PermissionError as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+    except FileNotFoundError as e:
+        return jsonify({"success": False, "error": str(e)}), 400
     except ValueError as e:
         return jsonify({"success": False, "error": "Valeurs numériques invalides"}), 400
     except KeyError as e:
@@ -387,7 +402,7 @@ def calculate():
 
 @app.route('/recette', methods=['GET'])
 def liste_fichiers_recette():
-    """Get list of available recipe files"""
+    """Get list of available recipe files, filtering out temporary Excel files"""
     base_dir = os.path.dirname(__file__)
     dossier_recette = os.path.join(base_dir, 'recette')
     
@@ -395,8 +410,14 @@ def liste_fichiers_recette():
         print(f"Le dossier {dossier_recette} n'existe pas.")
         return jsonify([])
     
-    fichiers = os.listdir(dossier_recette)
-    return jsonify(fichiers)
+    try:
+        fichiers = os.listdir(dossier_recette)
+        # Filtrer les fichiers temporaires Excel (qui commencent par ~$)
+        fichiers_filtres = [f for f in fichiers if not f.startswith('~$') and f.endswith('.xlsx')]
+        return jsonify(fichiers_filtres)
+    except Exception as e:
+        print(f"Erreur lors de la lecture du dossier recette: {str(e)}")
+        return jsonify([])
 
 @app.route('/send_mail', methods=['POST'])
 def send_mail():

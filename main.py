@@ -48,11 +48,12 @@ def dataFrame(fichier_excel):
     return df
 
 def solvant_initial(df):
-    """Extract initial solvent composition from DataFrame"""
+    """Extract initial solvent composition from DataFrame using dynamic component names"""
     solvant_initial = {}
     for _, row in df.iterrows():
         if pd.notna(row['ComposantsSolvant']):
-            solvant_initial[row['ComposantsSolvant']] = {
+            component_name = row['ComposantsSolvant']
+            solvant_initial[component_name] = {
                 "concL": row['concL'],
                 "density": row['density'],
                 "IR": row['IR']
@@ -86,36 +87,48 @@ def calculate_total_values(solvant_initial):
 def etape_1(n, d, sI, eco_adds):
     """
     Step 1: Solve system of equations to find component concentrations.
-    Handles both 3-component (without ETOH) and 4-component systems.
+    Handles both 3-component and 4-component systems with exact formulas.
     """
     print("Etape 1: Résolution du système d'équations")
     try:
-        # Check if ETOH is present in the solvent
-        has_etoh = "ETOH" in sI
+        # Check if compo4 is present in the solvent
+        has_compo4 = "compo4" in sI
         
-        if has_etoh:
-            # 4-component system: correct for ethanol contribution
-            print("Système à 4 composants avec ETOH")
-            fraction_etoh = sI["ETOH"]["concL"]
-            ir_corrige = n - (fraction_etoh * sI["ETOH"]["IR"])
-            densite_corrigee = d - (fraction_etoh * sI["ETOH"]["density"])
-            somme_fractions = 1.0 - fraction_etoh
+        if has_compo4:
+            # 4-component system with fixed compo4 concentration
+            print("Système à 4 composants avec compo4")
+            fixed_compo4_conc = 0.0092
             
-            # Matrix for 3 remaining components
+            # Get compo4 properties
+            d4 = sI["compo4"]["density"]
+            n4 = sI["compo4"]["IR"]
+            
+            # Calculate corrected values
+            # d = d1*x1 + d2*x2 + d3*x3 + d4*0.0092
+            # n = n1*x1 + n2*x2 + n3*x3 + n4*0.0092
+            # 1 = x1 + x2 + x3 + 0.0092
+            densite_corrigee = d - (d4 * fixed_compo4_conc)
+            ir_corrige = n - (n4 * fixed_compo4_conc)
+            somme_fractions_corrigee = 1.0 - fixed_compo4_conc
+            
+            # Matrix for 3 remaining components (compo1, compo2, compo3)
             A = np.array([
-                [sI["ISOL"]["IR"], sI["BZOH"]["IR"], sI["DIPB"]["IR"]],
-                [sI["ISOL"]["density"], sI["BZOH"]["density"], sI["DIPB"]["density"]],
+                [sI["compo1"]["IR"], sI["compo2"]["IR"], sI["compo3"]["IR"]],
+                [sI["compo1"]["density"], sI["compo2"]["density"], sI["compo3"]["density"]],
                 [1.0, 1.0, 1.0]
             ])
             
-            b = np.array([ir_corrige, densite_corrigee, somme_fractions])
+            b = np.array([ir_corrige, densite_corrigee, somme_fractions_corrigee])
             
         else:
             # 3-component system: direct calculation
-            print("Système à 3 composants sans ETOH")
+            print("Système à 3 composants sans compo4")
+            # d = d1*x1 + d2*x2 + d3*x3
+            # n = n1*x1 + n2*x2 + n3*x3
+            # 1 = x1 + x2 + x3
             A = np.array([
-                [sI["ISOL"]["IR"], sI["BZOH"]["IR"], sI["DIPB"]["IR"]],
-                [sI["ISOL"]["density"], sI["BZOH"]["density"], sI["DIPB"]["density"]],
+                [sI["compo1"]["IR"], sI["compo2"]["IR"], sI["compo3"]["IR"]],
+                [sI["compo1"]["density"], sI["compo2"]["density"], sI["compo3"]["density"]],
                 [1.0, 1.0, 1.0]
             ])
             
@@ -123,12 +136,12 @@ def etape_1(n, d, sI, eco_adds):
         
         # Solve the system
         solution = np.linalg.solve(A, b)
-        isol, bzoh, dipb = solution
+        compo1, compo2, compo3 = solution
         
-        print(f"Concentrations calculées - ISOL: {isol:.5f}, BZOH: {bzoh:.5f}, DIPB: {dipb:.5f}")
+        print(f"Concentrations calculées - compo1: {compo1:.5f}, compo2: {compo2:.5f}, compo3: {compo3:.5f}")
         
         # Proceed to step 2
-        return etape_2(isol, bzoh, dipb, sI, eco_adds)
+        return etape_2(compo1, compo2, compo3, sI, eco_adds)
 
     except np.linalg.LinAlgError:
         raise Exception("Impossible de résoudre le système d'équations")
@@ -138,13 +151,14 @@ def etape_1(n, d, sI, eco_adds):
 def etape_2(x, y, z, sI, eco_adds):
     """
     Step 2: Determine which component is in excess by comparing current ratios with initial ratios.
+    Updated to use compo1, compo2, compo3 naming.
     """
     print("Etape 2: Détermination du composant en excès")
     try:
         # Calculate initial ratios
-        a = sI["ISOL"]["concL"] / sI["BZOH"]["concL"]
-        b = sI["DIPB"]["concL"] / sI["BZOH"]["concL"]
-        c = sI["DIPB"]["concL"] / sI["ISOL"]["concL"]
+        a = sI["compo1"]["concL"] / sI["compo2"]["concL"]
+        b = sI["compo3"]["concL"] / sI["compo2"]["concL"]
+        c = sI["compo3"]["concL"] / sI["compo1"]["concL"]
 
         # Calculate current ratios
         a_ = x/y
@@ -156,13 +170,13 @@ def etape_2(x, y, z, sI, eco_adds):
 
         # Determine excess component
         if a_ > a and c_ < c:
-            print("ISOL est en excès")
+            print("compo1 est en excès")
             return etape_3(x, y, z, sI, "1", (a, b, c), (a_, b_, c_), eco_adds)
         elif a_ < a and b_ < b:
-            print("BZOH est en excès")
+            print("compo2 est en excès")
             return etape_3(x, y, z, sI, "2", (a, b, c), (a_, b_, c_), eco_adds)
         elif b_ > b and c_ > c:
-            print("DIPB est en excès")
+            print("compo3 est en excès")
             return etape_3(x, y, z, sI, "3", (a, b, c), (a_, b_, c_), eco_adds)
         else:
             raise Exception("Impossible de déterminer le composant en excès")
@@ -173,6 +187,7 @@ def etape_2(x, y, z, sI, eco_adds):
 def etape_3(x, y, z, sI, ex, ABC, ABC_, eco_adds):
     """
     Step 3: Calculate required additive quantities to rebalance the solvent.
+    Updated to use compo1, compo2, compo3 naming.
     Uses EcoAdds data from Excel file for additive concentrations.
     """
     print("Etape 3: Calcul des quantités d'additifs")
@@ -184,41 +199,41 @@ def etape_3(x, y, z, sI, ex, ABC, ABC_, eco_adds):
         eco_add_2_conc = eco_adds.get('EcoAdd 2', {}).get('ecoAddA', 0.81)
         eco_add_3_conc = eco_adds.get('EcoAdd 3', {}).get('ecoAddS', 0.83)
         
-        if ex == "1":  # ISOL en excès
-            print("Calcul pour ISOL en excès")
-            bzoh_cible = x / ABC[0]
-            dipb_cible = ABC[2] * x
-            delta_bzoh = bzoh_cible - y
-            delta_dipb = dipb_cible - z
+        if ex == "1":  # compo1 en excès
+            print("Calcul pour compo1 en excès")
+            compo2_cible = x / ABC[0]
+            compo3_cible = ABC[2] * x
+            delta_compo2 = compo2_cible - y
+            delta_compo3 = compo3_cible - z
             
-            if delta_bzoh > 0:
-                additives["EcoAdd 2"] = delta_bzoh / eco_add_2_conc
-            if delta_dipb > 0:
-                additives["EcoAdd 3"] = delta_dipb / eco_add_3_conc
+            if delta_compo2 > 0:
+                additives["EcoAdd 2"] = delta_compo2 / eco_add_2_conc
+            if delta_compo3 > 0:
+                additives["EcoAdd 3"] = delta_compo3 / eco_add_3_conc
             
-        elif ex == "2":  # BZOH en excès
-            print("Calcul pour BZOH en excès")
-            isol_cible = ABC[0] * y
-            dipb_cible = ABC[1] * y
-            delta_isol = isol_cible - x
-            delta_dipb = dipb_cible - z
+        elif ex == "2":  # compo2 en excès
+            print("Calcul pour compo2 en excès")
+            compo1_cible = ABC[0] * y
+            compo3_cible = ABC[1] * y
+            delta_compo1 = compo1_cible - x
+            delta_compo3 = compo3_cible - z
             
-            if delta_isol > 0:
-                additives["EcoAdd 1"] = delta_isol / eco_add_1_conc
-            if delta_dipb > 0:
-                additives["EcoAdd 3"] = delta_dipb / eco_add_3_conc
+            if delta_compo1 > 0:
+                additives["EcoAdd 1"] = delta_compo1 / eco_add_1_conc
+            if delta_compo3 > 0:
+                additives["EcoAdd 3"] = delta_compo3 / eco_add_3_conc
             
-        elif ex == "3":  # DIPB en excès
-            print("Calcul pour DIPB en excès")
-            isol_cible = z / ABC[2]
-            bzoh_cible = z / ABC[1]
-            delta_isol = isol_cible - x
-            delta_bzoh = bzoh_cible - y
+        elif ex == "3":  # compo3 en excès
+            print("Calcul pour compo3 en excès")
+            compo1_cible = z / ABC[2]
+            compo2_cible = z / ABC[1]
+            delta_compo1 = compo1_cible - x
+            delta_compo2 = compo2_cible - y
             
-            if delta_isol > 0:
-                additives["EcoAdd 1"] = delta_isol / eco_add_1_conc
-            if delta_bzoh > 0:
-                additives["EcoAdd 2"] = delta_bzoh / eco_add_2_conc
+            if delta_compo1 > 0:
+                additives["EcoAdd 1"] = delta_compo1 / eco_add_1_conc
+            if delta_compo2 > 0:
+                additives["EcoAdd 2"] = delta_compo2 / eco_add_2_conc
 
         # Filter out zero or negative values
         additives = {k: v for k, v in additives.items() if v > 0}

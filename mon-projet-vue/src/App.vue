@@ -249,12 +249,12 @@ export default {
 /* Header redesigné - Logo centré et sélecteur de langue à droite */
 header {
   background-color: transparent; /* Suppression du bandeau */
-  padding: 22px 20px; /* Réduit de 30px à 22px (réduction de 1/4) */
+  padding: 11px 20px; /* Réduit de 22px à 11px (réduction de moitié) */
   display: flex;
   justify-content: center; /* Centre le logo */
   align-items: center;
   position: relative;
-  min-height: 90px; /* Réduit de 120px à 90px (réduction de 1/4) */
+  min-height: 45px; /* Réduit de 90px à 45px (réduction de moitié) */
   transition: min-height 0.5s ease; /* Transition fluide pour la hauteur */
 }
 
@@ -285,9 +285,9 @@ header {
   transform: scale(1.05);
 }
 
-/* Ajustement de la hauteur du header quand le logo est grand - réduit de 1/4 */
+/* Ajustement de la hauteur du header quand le logo est grand - réduit de moitié */
 header:has(.logo-large) {
-  min-height: 150px; /* Réduit de 200px à 150px (réduction de 1/4) */
+  min-height: 75px; /* Réduit de 150px à 75px (réduction de moitié) */
 }
 
 /* Language switcher - positionné absolument en haut à droite */
@@ -378,13 +378,13 @@ header:has(.logo-large) {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
-/* Contenu principal - espacement réduit de 1/4 */
+/* Contenu principal - espacement réduit de moitié */
 #calculator {
   margin: auto;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 15px; /* Réduit de 20px à 15px (réduction de 1/4) */
+  padding: 7px; /* Réduit de 15px à 7px (réduction de moitié) */
   width: 100%;
   box-sizing: border-box;
 }
@@ -546,12 +546,12 @@ a {
 
 @media (max-width: 768px) {
   header {
-    padding: 15px; /* Réduit de 20px à 15px (réduction de 1/4) */
-    min-height: 75px; /* Réduit de 100px à 75px (réduction de 1/4) */
+    padding: 7px 15px; /* Réduit de 15px à 7px (réduction de moitié) */
+    min-height: 37px; /* Réduit de 75px à 37px (réduction de moitié) */
   }
 
   header:has(.logo-large) {
-    min-height: 120px; /* Réduit de 160px à 120px (réduction de 1/4) */
+    min-height: 60px; /* Réduit de 120px à 60px (réduction de moitié) */
   }
 
   #header-logo {
@@ -591,7 +591,7 @@ a {
   }
 
   #calculator {
-    padding: 15px 7px; /* Réduit de 20px 10px à 15px 7px (réduction de 1/4) */
+    padding: 7px 3px; /* Réduit de 15px 7px à 7px 3px (réduction de moitié) */
     justify-content: center;
     align-items: center;
   }
@@ -637,12 +637,12 @@ a {
 
 @media (max-width: 480px) {
   header {
-    padding: 11px 10px; /* Réduit de 15px à 11px (réduction de 1/4) */
-    min-height: 60px; /* Réduit de 80px à 60px (réduction de 1/4) */
+    padding: 5px 10px; /* Réduit de 11px 10px à 5px 10px (réduction de moitié) */
+    min-height: 30px; /* Réduit de 60px à 30px (réduction de moitié) */
   }
 
   header:has(.logo-large) {
-    min-height: 105px; /* Réduit de 140px à 105px (réduction de 1/4) */
+    min-height: 52px; /* Réduit de 105px à 52px (réduction de moitié) */
   }
 
   #header-logo {
@@ -699,7 +699,7 @@ a {
   }
 
   #calculator {
-    padding: 11px 4px; /* Réduit de 15px 5px à 11px 4px (réduction de 1/4) */
+    padding: 5px 2px; /* Réduit de 11px 4px à 5px 2px (réduction de moitié) */
     width: 100%;
     display: flex;
     justify-content: center;

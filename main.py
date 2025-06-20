@@ -53,25 +53,49 @@ def solvant_initial(df):
     for _, row in df.iterrows():
         if pd.notna(row['ComposantsSolvant']):
             component_name = row['ComposantsSolvant']
-            solvant_initial[component_name] = {
-                "concL": row['concL'],
-                "density": row['density'],
-                "IR": row['IR']
-            }
+            # Vérifier que toutes les valeurs nécessaires sont présentes
+            if pd.notna(row['concL']) and pd.notna(row['density']) and pd.notna(row['IR']):
+                solvant_initial[component_name] = {
+                    "concL": row['concL'],
+                    "density": row['density'],
+                    "IR": row['IR']
+                }
+            else:
+                print(f"Attention: Valeurs manquantes pour le composant {component_name}")
+    
+    print(f"Composants trouvés: {list(solvant_initial.keys())}")
     return solvant_initial
 
 def EcoAdds(df):
     """Extract EcoAdd additives data from DataFrame"""
-    dfEcoAdds = df[['ComposantsEcoAdd', 'ecoAddH', 'ecoAddA', 'ecoAddS']].dropna()      
+    eco_adds_dict = {}
+    
+    # Vérifier si les colonnes existent
+    required_columns = ['ComposantsEcoAdd', 'ecoAddH', 'ecoAddA', 'ecoAddS']
+    missing_columns = [col for col in required_columns if col not in df.columns]
+    
+    if missing_columns:
+        print(f"Colonnes EcoAdd manquantes: {missing_columns}")
+        return eco_adds_dict
+    
+    # Filtrer les lignes avec des données EcoAdd valides
+    dfEcoAdds = df[required_columns].dropna()
+    
+    if dfEcoAdds.empty:
+        print("Aucune donnée EcoAdd trouvée dans le fichier Excel")
+        return eco_adds_dict
+    
     dfEcoAdds = dfEcoAdds.set_index('ComposantsEcoAdd')  
-    EcoAdds_dict = {}
+    
     for index, row in dfEcoAdds.iterrows():
-        EcoAdds_dict[index] = {
+        eco_adds_dict[index] = {
             'ecoAddH': row['ecoAddH'],
             'ecoAddA': row['ecoAddA'], 
             'ecoAddS': row['ecoAddS']
         }
-    return EcoAdds_dict
+    
+    print(f"EcoAdds trouvés: {list(eco_adds_dict.keys())}")
+    return eco_adds_dict
 
 def calculate_total_values(solvant_initial):
     """Calculate total theoretical density and IR values"""
@@ -91,6 +115,17 @@ def etape_1(n, d, sI, eco_adds):
     """
     print("Etape 1: Résolution du système d'équations")
     try:
+        # Vérifier que nous avons au moins 3 composants
+        if len(sI) < 3:
+            raise Exception(f"Nombre insuffisant de composants: {len(sI)}. Au moins 3 composants requis.")
+        
+        # Vérifier la présence des composants requis
+        required_components = ["compo1", "compo2", "compo3"]
+        missing_components = [comp for comp in required_components if comp not in sI]
+        
+        if missing_components:
+            raise Exception(f"Composants manquants: {missing_components}")
+        
         # Check if compo4 is present in the solvent
         has_compo4 = "compo4" in sI
         
@@ -155,6 +190,10 @@ def etape_2(x, y, z, sI, eco_adds):
     """
     print("Etape 2: Détermination du composant en excès")
     try:
+        # Vérifier que les valeurs ne sont pas nulles pour éviter la division par zéro
+        if y == 0 or x == 0:
+            raise Exception("Division par zéro détectée dans le calcul des ratios")
+        
         # Calculate initial ratios
         a = sI["compo1"]["concL"] / sI["compo2"]["concL"]
         b = sI["compo3"]["concL"] / sI["compo2"]["concL"]
@@ -194,10 +233,25 @@ def etape_3(x, y, z, sI, ex, ABC, ABC_, eco_adds):
     try:
         additives = {}
         
-        # Get EcoAdd concentrations from Excel data
-        eco_add_1_conc = eco_adds.get('EcoAdd H', {}).get('ecoAddH')
-        eco_add_2_conc = eco_adds.get('EcoAdd A', {}).get('ecoAddA')
-        eco_add_3_conc = eco_adds.get('EcoAdd S', {}).get('ecoAddS')
+        # Vérifier que nous avons des données EcoAdds
+        if not eco_adds:
+            raise Exception("Aucune donnée EcoAdd trouvée dans le fichier Excel")
+        
+        # Get EcoAdd concentrations from Excel data avec validation
+        eco_add_1_conc = None
+        eco_add_2_conc = None
+        eco_add_3_conc = None
+        
+        # Chercher les EcoAdds avec différents noms possibles
+        for key, values in eco_adds.items():
+            if 'H' in key.upper() or '1' in key:
+                eco_add_1_conc = values.get('ecoAddH')
+            elif 'A' in key.upper() or '2' in key:
+                eco_add_2_conc = values.get('ecoAddA')
+            elif 'S' in key.upper() or '3' in key:
+                eco_add_3_conc = values.get('ecoAddS')
+        
+        print(f"Concentrations EcoAdd trouvées - H: {eco_add_1_conc}, A: {eco_add_2_conc}, S: {eco_add_3_conc}")
         
         if ex == "1":  # compo1 en excès
             print("Calcul pour compo1 en excès")
@@ -206,9 +260,9 @@ def etape_3(x, y, z, sI, ex, ABC, ABC_, eco_adds):
             delta_compo2 = compo2_cible - y
             delta_compo3 = compo3_cible - z
             
-            if delta_compo2 > 0:
+            if delta_compo2 > 0 and eco_add_2_conc is not None and eco_add_2_conc != 0:
                 additives["EcoAdd 2"] = delta_compo2 / eco_add_2_conc
-            if delta_compo3 > 0:
+            if delta_compo3 > 0 and eco_add_3_conc is not None and eco_add_3_conc != 0:
                 additives["EcoAdd 3"] = delta_compo3 / eco_add_3_conc
             
         elif ex == "2":  # compo2 en excès
@@ -218,9 +272,9 @@ def etape_3(x, y, z, sI, ex, ABC, ABC_, eco_adds):
             delta_compo1 = compo1_cible - x
             delta_compo3 = compo3_cible - z
             
-            if delta_compo1 > 0:
+            if delta_compo1 > 0 and eco_add_1_conc is not None and eco_add_1_conc != 0:
                 additives["EcoAdd 1"] = delta_compo1 / eco_add_1_conc
-            if delta_compo3 > 0:
+            if delta_compo3 > 0 and eco_add_3_conc is not None and eco_add_3_conc != 0:
                 additives["EcoAdd 3"] = delta_compo3 / eco_add_3_conc
             
         elif ex == "3":  # compo3 en excès
@@ -230,13 +284,17 @@ def etape_3(x, y, z, sI, ex, ABC, ABC_, eco_adds):
             delta_compo1 = compo1_cible - x
             delta_compo2 = compo2_cible - y
             
-            if delta_compo1 > 0:
+            if delta_compo1 > 0 and eco_add_1_conc is not None and eco_add_1_conc != 0:
                 additives["EcoAdd 1"] = delta_compo1 / eco_add_1_conc
-            if delta_compo2 > 0:
+            if delta_compo2 > 0 and eco_add_2_conc is not None and eco_add_2_conc != 0:
                 additives["EcoAdd 2"] = delta_compo2 / eco_add_2_conc
 
         # Filter out zero or negative values
         additives = {k: v for k, v in additives.items() if v > 0}
+        
+        if not additives:
+            print("Aucun additif calculé - vérifiez les données EcoAdd dans le fichier Excel")
+            return {"additives": {}, "message": "Aucun additif requis ou données EcoAdd manquantes"}
         
         print(f"Additifs calculés: {additives}")
         return {"additives": additives}
@@ -259,6 +317,14 @@ def calculate():
         # Get initial solvent data and EcoAdds data
         initial_solvent = solvant_initial(df)
         eco_adds_data = EcoAdds(df)
+        
+        # Vérifier que nous avons des données de solvant
+        if not initial_solvent:
+            return jsonify({"success": False, "error": "Aucune donnée de solvant trouvée dans le fichier Excel"}), 400
+        
+        print(f"Solvant initial: {initial_solvent}")
+        print(f"EcoAdds data: {eco_adds_data}")
+        
         # Calculate total theoretical values
         total_density, total_ir = calculate_total_values(initial_solvent)
         

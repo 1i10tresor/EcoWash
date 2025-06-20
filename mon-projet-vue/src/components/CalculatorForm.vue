@@ -105,6 +105,7 @@
 <script>
 import { computed, reactive, ref, watch, inject } from 'vue';
 import axios from 'axios';
+import { API_BASE_URL } from '../config/api.js';
 
 export default {
   name: 'CalculatorForm',
@@ -112,6 +113,9 @@ export default {
   setup(props, { emit }) {
     const currentLanguage = inject('currentLanguage');
     const translations = inject('translations');
+
+    // Configure axios base URL
+    axios.defaults.baseURL = API_BASE_URL;
 
     const donnees = reactive({
       modele: '',
@@ -199,7 +203,7 @@ export default {
 
     const recup_liste_recettes = async () => {
       try {
-        const response = await axios.get('/api/recette');
+        const response = await axios.get('/recette');
         liste_recettes.value = response.data;
         erreur.value = null;
       } catch (err) {
@@ -227,7 +231,7 @@ export default {
           refractionValue = (donnees.refraction / 476.21) + 1.3215;
         }
 
-        const response = await axios.post('/api/calculate', {
+        const response = await axios.post('/calculate', {
           densite: donnees.densite,
           refraction: refractionValue,
           fichier_excel: donnees.modele,
@@ -259,7 +263,7 @@ export default {
         isEmailSending.value = true;
         emailStatus.value = null;
         
-        const response = await axios.post('/api/send_mail', {
+        const response = await axios.post('/send_mail', {
           email: email.value,
           resultats: resultat_corrige.value,
           donnees: {

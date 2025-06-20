@@ -8,13 +8,18 @@ import yagmail
 from datetime import datetime
 import sqlite3
 import uuid
+from dotenv import load_dotenv
+
+# Charger les variables d'environnement
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
 
 def init_db():
     """Initialize the SQLite database for storing calculations"""
-    conn = sqlite3.connect('calculations.db')
+    db_path = os.getenv('DATABASE_PATH', 'calculations.db')
+    conn = sqlite3.connect(db_path)
     c = conn.cursor()
     c.execute('''
         CREATE TABLE IF NOT EXISTS calculations (
@@ -263,7 +268,8 @@ def calculate():
         calculation_id = str(uuid.uuid4())
 
         # Store calculation in database
-        conn = sqlite3.connect('calculations.db')
+        db_path = os.getenv('DATABASE_PATH', 'calculations.db')
+        conn = sqlite3.connect(db_path)
         c = conn.cursor()
         c.execute('''
             INSERT INTO calculations (
@@ -369,9 +375,17 @@ Ce message a été généré automatiquement par le système Ecowash.
 Pour toute question, contactez-nous à ecowash@spring-coating.com
 """
 
+        # Get email credentials from environment variables
+        email_user = os.getenv('EMAIL_USER')
+        email_password = os.getenv('EMAIL_PASSWORD')
+        
+        if not email_user or not email_password:
+            print("Erreur: Variables d'environnement EMAIL_USER ou EMAIL_PASSWORD manquantes")
+            return jsonify({"success": False, "error": "Configuration email manquante"}), 500
+
         # Initialize yagmail with error handling
         try:
-            yag = yagmail.SMTP('test.prog.recup@gmail.com', 'bageklcszxvknxdh')
+            yag = yagmail.SMTP(email_user, email_password)
         except Exception as e:
             print(f"Erreur de connexion SMTP: {str(e)}")
             return jsonify({"success": False, "error": "Erreur de configuration email"}), 500
@@ -388,7 +402,8 @@ Pour toute question, contactez-nous à ecowash@spring-coating.com
         # Update database with email information
         if calc_id and calc_id != 'N/A':
             try:
-                conn = sqlite3.connect('calculations.db')
+                db_path = os.getenv('DATABASE_PATH', 'calculations.db')
+                conn = sqlite3.connect(db_path)
                 c = conn.cursor()
                 c.execute('''
                     UPDATE calculations 
@@ -408,4 +423,9 @@ Pour toute question, contactez-nous à ecowash@spring-coating.com
         return jsonify({"success": False, "error": f"Erreur interne: {str(e)}"}), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    # Get configuration from environment variables
+    host = os.getenv('FLASK_HOST', '0.0.0.0')
+    port = int(os.getenv('FLASK_PORT', 5000))
+    debug = os.getenv('FLASK_DEBUG', 'True').lower() == 'true'
+    
+    app.run(host=host, port=port, debug=debug)

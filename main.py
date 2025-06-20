@@ -138,7 +138,7 @@ def etape_1(n, d, sI, eco_adds):
         solution = np.linalg.solve(A, b)
         compo1, compo2, compo3 = solution
         
-        print(f"Concentrations calculées - compo1: {compo1:.5f}, compo2: {compo2:.5f}, compo3: {compo3:.5f}")
+        print(f"Concentrations calculées - compo1: {compo1:.6f}, compo2: {compo2:.6f}, compo3: {compo3:.6f}")
         
         # Proceed to step 2
         return etape_2(compo1, compo2, compo3, sI, eco_adds)

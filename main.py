@@ -49,6 +49,7 @@ def get_confidence_interval():
         # Vérifier que le fichier existe
         if not os.path.exists(confidence_file):
             print(f"Attention: Le fichier intervalleConfiance.xlsx n'existe pas. Utilisation de la valeur par défaut 0.005")
+            print(f"DEBUG: Intervalle de confiance utilisé (défaut): 0.005")
             return 0.005
         
         try:
@@ -62,23 +63,29 @@ def get_confidence_interval():
                 # Vérifier que c'est un nombre valide
                 if pd.notna(confidence_value) and isinstance(confidence_value, (int, float)):
                     print(f"Intervalle de confiance récupéré: {confidence_value}")
+                    print(f"DEBUG: Intervalle de confiance utilisé (fichier Excel): {confidence_value}")
                     return float(confidence_value)
                 else:
                     print(f"Attention: Valeur invalide en A2 ({confidence_value}). Utilisation de la valeur par défaut 0.005")
+                    print(f"DEBUG: Intervalle de confiance utilisé (défaut après erreur): 0.005")
                     return 0.005
             else:
                 print("Attention: Le fichier intervalleConfiance.xlsx ne contient pas assez de données. Utilisation de la valeur par défaut 0.005")
+                print(f"DEBUG: Intervalle de confiance utilisé (défaut - données insuffisantes): 0.005")
                 return 0.005
                 
         except PermissionError:
             print("Attention: Le fichier intervalleConfiance.xlsx est ouvert dans Excel. Utilisation de la valeur par défaut 0.005")
+            print(f"DEBUG: Intervalle de confiance utilisé (défaut - permission): 0.005")
             return 0.005
         except Exception as e:
             print(f"Erreur lors de la lecture du fichier intervalleConfiance.xlsx: {str(e)}. Utilisation de la valeur par défaut 0.005")
+            print(f"DEBUG: Intervalle de confiance utilisé (défaut - erreur): 0.005")
             return 0.005
             
     except Exception as e:
         print(f"Erreur générale lors de la récupération de l'intervalle de confiance: {str(e)}. Utilisation de la valeur par défaut 0.005")
+        print(f"DEBUG: Intervalle de confiance utilisé (défaut - erreur générale): 0.005")
         return 0.005
 
 # Initialize database on startup
@@ -393,9 +400,23 @@ def calculate():
         # Récupérer l'intervalle de confiance depuis le fichier Excel
         confidence_interval = get_confidence_interval()
         
+        # DEBUG: Afficher toutes les valeurs utilisées dans la comparaison
+        print(f"DEBUG: ===== COMPARAISON DES VALEURS =====")
+        print(f"DEBUG: Densité théorique totale: {total_density}")
+        print(f"DEBUG: Densité mesurée: {densite}")
+        print(f"DEBUG: Différence densité: {abs(total_density - densite)}")
+        print(f"DEBUG: IR théorique total: {total_ir}")
+        print(f"DEBUG: IR mesuré: {indice_refraction}")
+        print(f"DEBUG: Différence IR: {abs(total_ir - indice_refraction)}")
+        print(f"DEBUG: Intervalle de confiance: {confidence_interval}")
+        print(f"DEBUG: Densité dans tolérance? {abs(total_density - densite) < confidence_interval}")
+        print(f"DEBUG: IR dans tolérance? {abs(total_ir - indice_refraction) < confidence_interval}")
+        print(f"DEBUG: =====================================")
+        
         # Check if rebalancing is necessary
         if (abs(total_density - densite) < confidence_interval and 
             abs(total_ir - indice_refraction) < confidence_interval):
+            print(f"DEBUG: Rééquilibrage non nécessaire - toutes les valeurs sont dans la tolérance")
             calculation_id = str(uuid.uuid4())
             return jsonify({
                 "success": True,
@@ -403,6 +424,7 @@ def calculate():
                 "calculationId": calculation_id
             })
 
+        print(f"DEBUG: Rééquilibrage nécessaire - au moins une valeur dépasse la tolérance")
         # Calculate result if rebalancing is needed
         result = etape_1(indice_refraction, densite, initial_solvent, eco_adds_data)
 

@@ -37,6 +37,47 @@ def init_db():
     conn.commit()
     conn.close()
 
+def get_confidence_interval():
+    """Récupère la valeur d'intervalle de confiance depuis le fichier Excel"""
+    try:
+        base_dir = os.path.dirname(__file__)
+        confidence_file = os.path.join(base_dir, 'intervalleConfiance.xlsx')
+        
+        # Vérifier que le fichier existe
+        if not os.path.exists(confidence_file):
+            print(f"Attention: Le fichier intervalleConfiance.xlsx n'existe pas. Utilisation de la valeur par défaut 0.005")
+            return 0.005
+        
+        try:
+            # Lire le fichier Excel
+            df = pd.read_excel(confidence_file, header=None)
+            
+            # Récupérer la valeur en A2 (ligne 1, colonne 0 en indexation pandas)
+            if len(df) > 1 and len(df.columns) > 0:
+                confidence_value = df.iloc[1, 0]  # A2 correspond à ligne 1, colonne 0
+                
+                # Vérifier que c'est un nombre valide
+                if pd.notna(confidence_value) and isinstance(confidence_value, (int, float)):
+                    print(f"Intervalle de confiance récupéré: {confidence_value}")
+                    return float(confidence_value)
+                else:
+                    print(f"Attention: Valeur invalide en A2 ({confidence_value}). Utilisation de la valeur par défaut 0.005")
+                    return 0.005
+            else:
+                print("Attention: Le fichier intervalleConfiance.xlsx ne contient pas assez de données. Utilisation de la valeur par défaut 0.005")
+                return 0.005
+                
+        except PermissionError:
+            print("Attention: Le fichier intervalleConfiance.xlsx est ouvert dans Excel. Utilisation de la valeur par défaut 0.005")
+            return 0.005
+        except Exception as e:
+            print(f"Erreur lors de la lecture du fichier intervalleConfiance.xlsx: {str(e)}. Utilisation de la valeur par défaut 0.005")
+            return 0.005
+            
+    except Exception as e:
+        print(f"Erreur générale lors de la récupération de l'intervalle de confiance: {str(e)}. Utilisation de la valeur par défaut 0.005")
+        return 0.005
+
 # Initialize database on startup
 init_db()
 
@@ -346,13 +387,16 @@ def calculate():
         # Calculate total theoretical values
         total_density, total_ir = calculate_total_values(initial_solvent)
         
+        # Récupérer l'intervalle de confiance depuis le fichier Excel
+        confidence_interval = get_confidence_interval()
+        
         # Check if rebalancing is necessary
-        if (abs(total_density - densite) < 0.005 and 
-            abs(total_ir - indice_refraction) < 0.005):
+        if (abs(total_density - densite) < confidence_interval and 
+            abs(total_ir - indice_refraction) < confidence_interval):
             calculation_id = str(uuid.uuid4())
             return jsonify({
                 "success": True,
-                "message": "Le rééquilibrage n'est pas nécessaire",
+                "message": f"Le rééquilibrage n'est pas nécessaire (tolérance: ±{confidence_interval})",
                 "calculationId": calculation_id
             })
 

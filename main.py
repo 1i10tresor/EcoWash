@@ -16,6 +16,9 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
+# Configuration pour le préfixe API
+API_PREFIX = '/api'
+
 def init_db():
     """Initialize the SQLite database for storing calculations"""
     db_path = os.getenv('DATABASE_PATH', 'calculations.db')
@@ -361,7 +364,7 @@ def etape_3(x, y, z, sI, ex, ratios_initiaux, ratios_actuels, eco_adds):
     except Exception as e:
         raise Exception(f"Erreur lors de l'étape 3: {str(e)}")
 
-@app.route('/calculate', methods=['POST'])
+@app.route(f'{API_PREFIX}/calculate', methods=['POST'])
 def calculate():
     """Main calculation endpoint"""
     try:
@@ -444,7 +447,7 @@ def calculate():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
-@app.route('/recette', methods=['GET'])
+@app.route(f'{API_PREFIX}/recette', methods=['GET'])
 def liste_fichiers_recette():
     """Get list of available recipe files, filtering out temporary Excel files"""
     base_dir = os.path.dirname(__file__)
@@ -463,7 +466,7 @@ def liste_fichiers_recette():
         print(f"Erreur lors de la lecture du dossier recette: {str(e)}")
         return jsonify([])
 
-@app.route('/send_mail', methods=['POST'])
+@app.route(f'{API_PREFIX}/send_mail', methods=['POST'])
 def send_mail():
     """Send calculation results via email"""
     try:

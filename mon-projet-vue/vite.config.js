@@ -8,9 +8,9 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://192.168.1.8:5000', // 👈 Adresse IP de ton PC
+        target: 'http://localhost:5000', // Backend Flask local
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
+        // Pas de réécriture - on garde le préfixe /api
       },
     },
   },
